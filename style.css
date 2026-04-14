@@ -575,6 +575,79 @@ body {
     color: var(--text-muted);
 }
 
+/* --- Health Dashboard --- */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.health-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.health-card:hover { border-color: var(--primary); transform: scale(1.02); }
+
+.h-label { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.h-value { display: block; font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 4px; }
+.h-desc { font-size: 12px; color: var(--text-muted); }
+
+/* Activity Graph */
+.graph-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 24px;
+    padding: 32px;
+}
+
+.graph-container h3 {
+    font-size: 18px;
+    margin-bottom: 24px;
+    font-weight: 700;
+}
+
+.graph-wrapper {
+    height: 200px;
+    width: 100%;
+    position: relative;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+}
+
+#history-graph { width: 100%; height: 100%; }
+
+.graph-path {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 8px var(--primary-glow));
+}
+
+.graph-area {
+    fill: url(#gradient);
+    opacity: 0.15;
+}
+
+.graph-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Section Switching */
+#viewport-players > section {
+    animation: fadeIn 0.4s ease forwards;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
