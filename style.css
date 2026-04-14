@@ -409,6 +409,16 @@ body {
     transition: var(--transition);
 }
 
+.player-card.offline-card {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+}
+
+.player-card.offline-card:hover {
+    opacity: 0.9;
+    filter: grayscale(0);
+}
+
 .player-card:hover::before {
     opacity: 1;
 }
