@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Management
     let players = [];
     let serverHealth = { tps: 20, mspt: 0, players_online: 0, players_max: 0 };
-    let playerHistory = []; // Now stores objects: [{p, t, m, ts}, ...]
+    let playerHistory = [];
     let selectedPlayer = null;
     let currentSort = 'none';
 
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (sData) serverHealth = sData;
 
             const hData = await hRes.json();
-            if (hData) playerHistory = hData;
+            if (hData) playerHistory = Array.isArray(hData) ? hData : [];
 
             renderAll();
         } catch (e) {
@@ -67,12 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (selectedPlayer) {
             const updated = players.find(p => p.uuid === selectedPlayer.uuid);
-            if (updated) showPlayerDetails(updated.uuid);
+            if (updated) updateDetailPanel(updated);
         }
     }
 
     /**
-     * UI Renderers
+     * Rendering logic
      */
     function renderHealthStatus() {
         hTPS.textContent = serverHealth.tps.toFixed(2);
@@ -89,14 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = playerHistory.length;
         const stepX = w / (count - 1);
 
-        // Max values for scaling
         const maxP = Math.max(...playerHistory.map(d => d.p), 5);
         const maxM = Math.max(...playerHistory.map(d => d.m), 60);
 
-        // Helper to get Y coordinate
         const getY = (val, max, offsetPercent = 0.8) => h - ((val / max) * (h * offsetPercent)) - (h * 0.1);
 
-        // Paths
         const pathP = playerHistory.map((d, i) => `${i * stepX},${getY(d.p, maxP)}`);
         const pathT = playerHistory.map((d, i) => `${i * stepX},${getY(d.t, 20)}`);
         const pathM = playerHistory.map((d, i) => `${i * stepX},${getY(d.m, maxM, 0.5)}`);
@@ -113,22 +110,19 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     graphWrapper.addEventListener('mousemove', (e) => {
         if (!playerHistory.length) return;
-        
         const rect = graphWrapper.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const w = rect.width;
         const stepX = w / (playerHistory.length - 1);
-        const index = Math.round(x / stepX);
+        const index = Math.min(Math.max(Math.round(x / stepX), 0), playerHistory.length - 1);
         const data = playerHistory[index];
 
         if (!data) return;
 
-        // Position tooltop
         graphTooltip.style.display = 'block';
-        graphTooltip.style.left = (x > w - 150 ? x - 160 : x + 20) + 'px';
+        graphTooltip.style.left = (x > w - 160 ? x - 170 : x + 20) + 'px';
         graphTooltip.style.top = '20px';
 
-        // Format Time
         const date = new Date(data.ts * 1000);
         const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -145,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Player Browser
+     * Player List
      */
     function renderPlayers() {
         const searchTerm = searchInput.value.toLowerCase();
@@ -158,9 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         playerGrid.innerHTML = filtered.map(player => {
             const stats = player.stats || {};
-            const custom = stats['minecraft:custom'] || {};
-            const playtimeHours = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-            const totalMined = Object.values(stats['minecraft:mined'] || {}).reduce((s, v) => s + v, 0);
+            const mined = stats.total_mined || 0;
+            const timeTicks = (stats['minecraft:custom'] || {})['PLAY_ONE_MINUTE'] || 0;
+            const timeHours = Math.floor(timeTicks / 20 / 60 / 60);
 
             return `
                 <div class="player-card ${!player.online ? 'offline-card' : ''}" onclick="showPlayerDetails('${player.uuid}')">
@@ -173,11 +167,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div class="p-quick-stats">
                         <div class="stat-item">
-                            <span class="val">${playtimeHours}h</span>
+                            <span class="val">${timeHours}h</span>
                             <span class="lab">Time</span>
                         </div>
                         <div class="stat-item">
-                            <span class="val">${totalMined}</span>
+                            <span class="val">${mined}</span>
                             <span class="lab">Mined</span>
                         </div>
                     </div>
@@ -190,66 +184,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getSortedPlayers() {
         let sorted = [...players];
-        const getMined = (p) => Object.values(p.stats?.['minecraft:mined'] || {}).reduce((s, v) => s + v, 0);
-
-        if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.[ 'PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.[ 'PLAY_ONE_MINUTE'] || 0));
-        else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.[ 'PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.[ 'PLAYER_KILLS'] || 0));
-        else if (currentSort === 'deaths') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.[ 'DEATHS'] || 0) - (a.stats?.['minecraft:custom']?.[ 'DEATHS'] || 0));
-        else if (currentSort === 'mined') sorted.sort((a, b) => getMined(b) - getMined(a));
+        if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
+        else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
+        else if (currentSort === 'deaths') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['DEATHS'] || 0) - (a.stats?.['minecraft:custom']?.[ 'DEATHS'] || 0));
+        else if (currentSort === 'mined') sorted.sort((a, b) => (b.stats?.total_mined || 0) - (a.stats?.total_mined || 0));
         else sorted.sort((a, b) => (b.online === a.online) ? a.username.localeCompare(b.username) : (b.online ? 1 : -1));
         return sorted;
     }
 
     /**
-     * Details & Analytics
+     * Detail Panel
      */
     window.showPlayerDetails = (uuid) => {
         const player = players.find(p => p.uuid === uuid);
         if (!player) return;
         selectedPlayer = player;
-
-        detailUsername.textContent = player.username;
-        detailAvatar.src = `https://mc-heads.net/body/${player.uuid}/160`;
-
-        const stats = player.stats || {};
-        const custom = stats['minecraft:custom'] || {};
-        const generalContainer = document.getElementById('general-stats-container');
-        
-        // Critical Stats
-        const pTicks = custom['PLAY_ONE_MINUTE'] || 0;
-        const pKills = custom['PLAYER_KILLS'] || 0;
-        const pDeaths = custom['DEATHS'] || 0;
-        const pMobKills = custom['MOB_KILLS'] || 0;
-
-        const mined = stats['minecraft:mined'] || {};
-        document.getElementById('stat-mined').textContent = Object.values(mined).reduce((s, v) => s + v, 0);
-        document.getElementById('stat-mob-kills').textContent = pMobKills;
-
-        // Dynamic General Grid
-        const excluded = ['PLAY_ONE_MINUTE', 'UUID'];
-        let gridHtml = `
-            <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${Math.floor(pTicks / 20 / 60 / 60)}h</span></div>
-            <div class="stat-card"><span class="stat-label">Total Deaths</span><span class="stat-value">${pDeaths}</span></div>
-            <div class="stat-card"><span class="stat-label">Player Kills</span><span class="stat-value">${pKills}</span></div>
-            <div class="stat-card"><span class="stat-label">K/D Ratio</span><span class="stat-value">${(pKills / Math.max(1, pDeaths)).toFixed(2)}</span></div>
-        `;
-
-        Object.entries(custom).forEach(([key, val]) => {
-            if (!excluded.includes(key) && !['DEATHS', 'PLAYER_KILLS', 'MOB_KILLS'].includes(key)) {
-                gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`;
-            }
-        });
-        generalContainer.innerHTML = gridHtml;
-
-        renderStatChart(document.getElementById('mining-graph'), mined, 'bar-stone');
-        renderStatChart(document.getElementById('combat-graph'), stats['minecraft:killed'] || {}, 'bar-emerald');
-        
+        updateDetailPanel(player);
         detailsPanel.classList.add('open');
     };
 
+    function updateDetailPanel(player) {
+        document.getElementById('detail-username').textContent = player.username;
+        document.getElementById('detail-avatar-body').src = `https://mc-heads.net/body/${player.uuid}/160`;
+
+        const stats = player.stats || {};
+        const custom = stats['minecraft:custom'] || {};
+        const container = document.getElementById('general-stats-container');
+        
+        // PAPI Mapping
+        const kills = custom['PLAYER_KILLS'] || 0;
+        const deaths = custom['DEATHS'] || 0;
+        const mobs = custom['MOB_KILLS'] || 0;
+        const mined = stats.total_mined || 0;
+        const placed = stats.total_placed || 0;
+        const kd = (kills / Math.max(1, deaths)).toFixed(2);
+        const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
+
+        // The "Big 6" Grid
+        let gridHtml = `
+            <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
+            <div class="stat-card"><span class="stat-label">Total Deaths</span><span class="stat-value">${deaths}</span></div>
+            <div class="stat-card"><span class="stat-label">Player Kills</span><span class="stat-value">${kills}</span></div>
+            <div class="stat-card"><span class="stat-label">K/D Ratio</span><span class="stat-value">${kd}</span></div>
+            <div class="stat-card"><span class="stat-label">Blocks Mined</span><span class="stat-value">${mined}</span></div>
+            <div class="stat-card"><span class="stat-label">Blocks Placed</span><span class="stat-value">${placed}</span></div>
+            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value">${mobs}</span></div>
+        `;
+
+        // Add other stats
+        const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
+        Object.entries(custom).forEach(([key, val]) => {
+            if (!featured.includes(key)) {
+                gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`;
+            }
+        });
+        container.innerHTML = gridHtml;
+
+        renderStatChart(document.getElementById('mining-graph'), stats['minecraft:mined'] || {}, 'bar-stone');
+        renderStatChart(document.getElementById('combat-graph'), stats['minecraft:killed'] || {}, 'bar-emerald');
+    }
+
     function renderStatChart(container, dataMap, defaultClass) {
         const items = Object.entries(dataMap || {}).map(([n, c]) => ({ n, c })).sort((a, b) => b.c - a.c).slice(0, 10);
-        if (items.length === 0) { container.innerHTML = '<div class="empty-msg">No entries recorded.</div>'; return; }
+        if (items.length === 0) { container.innerHTML = '<div class="empty-msg">No entries.</div>'; return; }
         const max = Math.max(...items.map(i => i.c), 1);
         container.innerHTML = items.map(i => `
             <div class="graph-row">
