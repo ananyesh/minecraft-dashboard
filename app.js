@@ -2,13 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Management
     let players = [];
     let selectedPlayer = null;
-    // Configuration: Replace with your Firebase URL from the Firebase Console
-    // Example: 'https://your-project.firebaseio.com/stats.json'
+    let currentSort = 'none';
+
+    // Configuration: Replace with your Firebase URL
     const firebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/stats.json';
 
     // DOM Elements
     const playerGrid = document.getElementById('player-grid');
     const searchInput = document.getElementById('player-search');
+    const sortBySelect = document.getElementById('sort-by');
     const detailsPanel = document.getElementById('details-panel');
     const closePanelBtn = document.getElementById('close-details');
     const onlineCountLabel = document.getElementById('online-count');
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statStone = document.getElementById('stat-stone');
     const statPlayerKills = document.getElementById('stat-player-kills');
     const statMobKills = document.getElementById('stat-mob-kills');
+    const miningGraph = document.getElementById('mining-graph');
 
     /**
      * Fetch player data from Firebase
@@ -42,10 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(firebaseURL);
             if (response.ok) {
                 const data = await response.json();
-                players = data || []; // Handle null if database is empty
+                players = data || [];
                 renderPlayers();
             } else {
-                console.log('Using mock data fallback...');
                 players = window.minecraftData || [];
                 renderPlayers();
             }
@@ -57,99 +59,163 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Render the grid of player cards
+     * Sort players based on current selection
      */
-    function renderPlayers() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const filtered = players.filter(p => p.username.toLowerCase().includes(searchTerm));
-
-        playerGrid.innerHTML = '';
+    function getSortedPlayers() {
+        let sorted = [...players];
         
-        let onlineCount = 0;
-        filtered.forEach((player, index) => {
-            if (player.online) onlineCount++;
-            
-            const card = document.createElement('div');
-            card.className = 'player-card';
-            card.style.animationDelay = `${index * 0.05}s`;
-            
-            const uuid = player.uuid;
-            const avatarUrl = `https://mc-heads.net/avatar/${uuid}/100`;
-            const mined = player.stats['minecraft:mined'] 
-                ? Object.values(player.stats['minecraft:mined']).reduce((a, b) => a + b, 0) 
-                : 0;
-            const kills = player.stats['minecraft:custom']?.['minecraft:player_kills'] || 0;
-
-            card.innerHTML = `
-                <div class="p-avatar">
-                    <img src="${avatarUrl}" alt="${player.username}">
-                </div>
-                <div class="p-name">${player.username}</div>
-                <div class="p-status ${player.online ? 'online' : 'offline'}">
-                    ${player.online ? 'Online' : 'Offline'}
-                </div>
-                <div class="p-quick-stats">
-                    <div class="stat-item">
-                        <span class="val">${mined.toLocaleString()}</span>
-                        <span class="lab">Mined</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="val">${kills}</span>
-                        <span class="lab">Kills</span>
-                    </div>
-                </div>
-            `;
-
-            card.addEventListener('click', () => openDetails(player));
-            playerGrid.appendChild(card);
-        });
-
-        onlineCountLabel.textContent = `${onlineCount}/${players.length}`;
+        if (currentSort === 'playtime') {
+            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:play_one_minute'] || 0) - (a.stats['minecraft:custom']['minecraft:play_one_minute'] || 0));
+        } else if (currentSort === 'kills') {
+            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:player_kills'] || 0) - (a.stats['minecraft:custom']['minecraft:player_kills'] || 0));
+        } else if (currentSort === 'deaths') {
+            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:deaths'] || 0) - (a.stats['minecraft:custom']['minecraft:deaths'] || 0));
+        } else if (currentSort === 'mined') {
+            sorted.sort((a, b) => {
+                const totalA = Object.values(a.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
+                const totalB = Object.values(b.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
+                return totalB - totalA;
+            });
+        }
+        
+        return sorted;
     }
 
     /**
-     * Open the side panel with detailed statistics
+     * Render player cards to the grid
      */
-    function openDetails(player) {
+    function renderPlayers() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const sortedPlayers = getSortedPlayers();
+        
+        const filteredPlayers = sortedPlayers.filter(p => 
+            p.username.toLowerCase().includes(searchTerm)
+        );
+
+        playerGrid.innerHTML = filteredPlayers.map(player => {
+            const playtimeHours = Math.floor((player.stats['minecraft:custom']['minecraft:play_one_minute'] || 0) / 20 / 60 / 60);
+            const totalMined = Object.values(player.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
+
+            return `
+                <div class="player-card" onclick="showPlayerDetails('${player.uuid}')">
+                    <div class="p-avatar">
+                        <img src="https://mc-heads.net/avatar/${player.uuid}/80" alt="${player.username}">
+                    </div>
+                    <div class="p-name">${player.username}</div>
+                    <div class="p-status ${player.online ? 'online' : 'offline'}">
+                        ${player.online ? 'Online' : 'Offline'}
+                    </div>
+                    <div class="p-quick-stats">
+                        <div class="stat-item">
+                            <span class="val">${playtimeHours}h</span>
+                            <span class="lab">Playtime</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="val">${totalMined}</span>
+                            <span class="lab">Mined</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
+    }
+
+    /**
+     * Show player details panel
+     */
+    window.showPlayerDetails = (uuid) => {
+        const player = players.find(p => p.uuid === uuid);
+        if (!player) return;
+
         selectedPlayer = player;
-        const customStats = player.stats['minecraft:custom'] || {};
-        const minedStats = player.stats['minecraft:mined'] || {};
-
-        // General Info
+        
+        // Update basic info
         detailUsername.textContent = player.username;
-        detailAvatar.src = `https://mc-heads.net/body/${player.uuid}/300`;
+        detailAvatar.src = `https://mc-heads.net/body/${player.uuid}/160`;
         
-        // General Stats
-        const playtimeTicks = customStats['minecraft:play_one_minute'] || 0;
-        const hours = Math.floor(playtimeTicks / 20 / 3600);
-        statPlaytime.textContent = `${hours}h`;
+        // Update stats
+        const playtimeTicks = player.stats['minecraft:custom']['minecraft:play_one_minute'] || 0;
+        statPlaytime.textContent = `${Math.floor(playtimeTicks / 20 / 60 / 60)}h`;
+        statDeaths.textContent = player.stats['minecraft:custom']['minecraft:deaths'] || 0;
+        statKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
         
-        const deaths = customStats['minecraft:deaths'] || 0;
-        const kills = customStats['minecraft:player_kills'] || 0;
-        statDeaths.textContent = deaths;
-        statKills.textContent = kills;
-        statKD.textContent = deaths === 0 ? kills.toFixed(2) : (kills / deaths).toFixed(2);
+        const kills = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
+        const deaths = player.stats['minecraft:custom']['minecraft:deaths'] || 1;
+        statKD.textContent = (kills / deaths).toFixed(2);
 
-        // Mining stats
-        const totalMined = Object.values(minedStats).reduce((a, b) => a + b, 0);
-        statMined.textContent = totalMined.toLocaleString();
-        statDiamonds.textContent = (minedStats['minecraft:diamond_ore'] || 0) + (minedStats['minecraft:deepslate_diamond_ore'] || 0);
-        statStone.textContent = (minedStats['minecraft:stone'] || 0).toLocaleString();
+        const mined = player.stats['minecraft:mined'];
+        const totalMined = Object.values(mined).reduce((sum, val) => sum + val, 0);
+        statMined.textContent = totalMined;
+        statDiamonds.textContent = mined['minecraft:diamond_ore'] || 0;
+        statStone.textContent = mined['minecraft:stone'] || 0;
+        
+        statPlayerKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
+        statMobKills.textContent = player.stats['minecraft:custom']['minecraft:mob_kills'] || 0;
 
-        // Combat
-        statPlayerKills.textContent = customStats['minecraft:player_kills'] || 0;
-        statMobKills.textContent = customStats['minecraft:mob_kills'] || 0;
-
+        renderMiningGraph(mined);
+        
         detailsPanel.classList.add('open');
+    };
+
+    /**
+     * Render mini bar graph for mining stats
+     */
+    function renderMiningGraph(mined) {
+        const blocks = [
+            { key: 'minecraft:diamond_ore', label: 'Diamond', class: 'bar-diamond' },
+            { key: 'minecraft:iron_ore', label: 'Iron', class: 'bar-iron' },
+            { key: 'minecraft:gold_ore', label: 'Gold', class: 'bar-gold' },
+            { key: 'minecraft:coal_ore', label: 'Coal', class: 'bar-coal' },
+            { key: 'minecraft:emerald_ore', label: 'Emerald', class: 'bar-emerald' },
+            { key: 'minecraft:redstone_ore', label: 'Redstone', class: 'bar-redstone' },
+            { key: 'minecraft:ancient_debris', label: 'Netherite', class: 'bar-ancient' },
+            { key: 'minecraft:stone', label: 'Stone', class: 'bar-stone' }
+        ];
+
+        // Find max for scaling
+        const maxVal = Math.max(...blocks.map(b => mined[b.key] || 0), 1);
+
+        miningGraph.innerHTML = blocks
+            .filter(b => (mined[b.key] || 0) > 0)
+            .map(block => {
+                const val = mined[block.key] || 0;
+                const percent = (val / maxVal) * 100;
+                
+                return `
+                    <div class="graph-row">
+                        <span class="graph-label">${block.label}</span>
+                        <div class="bar-container">
+                            <div class="bar-fill ${block.class}" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="graph-value">${val}</span>
+                    </div>
+                `;
+            }).join('');
+            
+        if (miningGraph.innerHTML === '') {
+            miningGraph.innerHTML = '<div class="empty-msg">No mining data yet.</div>';
+        }
     }
 
     // Event Listeners
+    closePanelBtn.addEventListener('click', () => {
+        detailsPanel.classList.remove('open');
+    });
+
     searchInput.addEventListener('input', renderPlayers);
-    closePanelBtn.addEventListener('click', () => detailsPanel.classList.remove('open'));
+    
+    sortBySelect.addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        renderPlayers();
+    });
+
     refreshBtn.addEventListener('click', updateStats);
 
     // Initial Load
     updateStats();
-    // Poll for updates every 10 seconds
-    setInterval(updateStats, 10000);
+    
+    // Auto-refresh every 30 seconds
+    setInterval(updateStats, 30000);
 });
