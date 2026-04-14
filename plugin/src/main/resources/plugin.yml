@@ -1,0 +1,6 @@
+name: WebStats
+version: 1.0
+main: me.antigravity.webstats.WebStats
+api-version: 1.21
+authors: [Antigravity]
+description: Exports player statistics to a web dashboard via HTTP.

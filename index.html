@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server — Player Statistics</title>
+    <meta name="description" content="View live player statistics, online status, and mined blocks for the CardsSMP Minecraft Server.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar: Server Navigation & State -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🌿</span>
+                    <h1 class="logo-text">Server<span>Stats</span></h1>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-item active" id="nav-players">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">Players</span>
+                </div>
+                <div class="nav-item" id="nav-world">
+                    <span class="nav-icon">🌍</span>
+                    <span class="nav-label">World Map</span>
+                </div>
+                <div class="nav-item" id="nav-leaderboards">
+                    <span class="nav-icon">🏆</span>
+                    <span class="nav-label">Leaderboards</span>
+                </div>
+            </div>
+
+            <div class="server-status-card">
+                <div class="status-header">
+                    <span class="status-indicator online"></span>
+                    <span class="status-text">Server Online</span>
+                </div>
+                <div class="server-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Players</span>
+                        <span class="metric-value" id="online-count">0/20</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">TPS</span>
+                        <span class="metric-value">20.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <p>© 2026 Server Dashboard</p>
+            </div>
+        </aside>
+
+        <!-- Main Content: Player Grid -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="player-search" placeholder="Search players by name...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btn-refresh">Refresh Stats</button>
+                    <div class="user-profile">
+                        <img src="https://mc-heads.net/avatar/Steve/32" alt="Profile" id="header-avatar">
+                    </div>
+                </div>
+            </header>
+
+            <section class="viewport">
+                <div class="section-title">
+                    <h2>Players</h2>
+                    <p>Click a player to view detailed statistics</p>
+                </div>
+                <div class="player-grid" id="player-grid">
+                    <!-- Players will be injected here -->
+                    <div class="loading-state">Loading players...</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Details Panel: Player Stats -->
+        <div class="details-panel" id="details-panel">
+            <button class="close-panel" id="close-details">✕</button>
+            <div class="panel-content">
+                <div class="player-profile-header">
+                    <div class="avatar-large-container">
+                        <img src="" alt="" id="detail-avatar-body" class="avatar-body">
+                    </div>
+                    <h2 id="detail-username" class="player-name">Username</h2>
+                    <div class="player-badges" id="detail-badges">
+                        <!-- Badges like [MVP], [VIP] -->
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3 class="group-title">General Stats</h3>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Playtime</span>
+                            <span class="stat-value" id="stat-playtime">0h</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Deaths</span>
+                            <span class="stat-value" id="stat-deaths">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Kills</span>
+                            <span class="stat-value" id="stat-kills">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">K/D Ratio</span>
+                            <span class="stat-value" id="stat-kd">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3 class="group-title">Mining & Gathering</h3>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Total Mined</span>
+                            <span class="stat-value" id="stat-mined">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Diamonds</span>
+                            <span class="stat-value" id="stat-diamonds">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Stone Mined</span>
+                            <span class="stat-value" id="stat-stone">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h3 class="group-title">Combat</h3>
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Player Kills</span>
+                            <span class="stat-value" id="stat-player-kills">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Mob Kills</span>
+                            <span class="stat-value" id="stat-mob-kills">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
