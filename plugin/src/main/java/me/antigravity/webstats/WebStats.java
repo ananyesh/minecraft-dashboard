@@ -27,8 +27,8 @@ public class WebStats extends JavaPlugin implements Listener {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    // History pulse (1hr)
-    private final LinkedList<Integer> playerHistory = new LinkedList<>();
+    // High-fidelity history objects
+    private final LinkedList<String> pulseHistory = new LinkedList<>();
 
     // Manual TPS Monitoring
     private long lastTick = System.currentTimeMillis();
@@ -40,7 +40,7 @@ public class WebStats extends JavaPlugin implements Listener {
         loadConfig();
 
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("WebStats enabled! Total Monitoring Mode active.");
+        getLogger().info("WebStats enabled! QuartzSMP Theme support active.");
 
         // TPS Monitor Task
         new BukkitRunnable() {
@@ -48,16 +48,13 @@ public class WebStats extends JavaPlugin implements Listener {
             public void run() {
                 long now = System.currentTimeMillis();
                 long diff = now - lastTick;
-                // Calculate TPS based on the time since the last tick
-                // 50ms is the ideal tick time. 
-                // We use a simple moving average for smoothness.
                 double instantTps = 1000.0 / Math.max(diff, 1);
                 currentTps = (currentTps * 0.9) + (Math.min(instantTps, 20.0) * 0.1);
                 lastTick = now;
             }
         }.runTaskTimer(this, 1L, 1L);
 
-        // Periodically sync all online players (Every 10s)
+        // Periodic Sync (Every 10s)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -68,11 +65,11 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimerAsynchronously(this, 100L, 200L);
 
-        // History Pulse (Every 1 minute)
+        // Record Pulse (Every 1 minute)
         new BukkitRunnable() {
             @Override
             public void run() {
-                recordPulse();
+                recordAdvancedPulse();
             }
         }.runTaskTimerAsynchronously(this, 1200L, 1200L);
     }
@@ -95,34 +92,35 @@ public class WebStats extends JavaPlugin implements Listener {
     private void syncServerStats() {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
 
-        long mspt = 0;
-        try {
-            // Use reflection for MSPT (Paper API check)
-            try {
-                // Check Bukkit.getTPS via reflection as well to avoid compile errors
-                // But we use our manual counter as fallback
-                mspt = (long) Bukkit.class.getMethod("getAverageTickTime").invoke(null);
-            } catch (Exception e) {
-                // Estimation based on TPS
-                mspt = (long) (50.0 * (20.0 / Math.max(0.1, currentTps)));
-            }
-        } catch (Exception ignored) {}
-
+        long mspt = calculateMSPT();
         String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d}", 
                 currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
 
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
-    private void recordPulse() {
-        int onlineCount = Bukkit.getOnlinePlayers().size();
-        playerHistory.add(onlineCount);
-        if (playerHistory.size() > 60) playerHistory.removeFirst();
+    private long calculateMSPT() {
+        try {
+            return (long) Bukkit.class.getMethod("getAverageTickTime").invoke(null);
+        } catch (Exception e) {
+            return (long) (50.0 * (20.0 / Math.max(0.1, currentTps)));
+        }
+    }
+
+    private void recordAdvancedPulse() {
+        int p = Bukkit.getOnlinePlayers().size();
+        double t = currentTps;
+        long m = calculateMSPT();
+        long ts = System.currentTimeMillis() / 1000;
+
+        String dataPoint = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", p, t, m, ts);
+        pulseHistory.add(dataPoint);
+        if (pulseHistory.size() > 60) pulseHistory.removeFirst();
 
         StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < playerHistory.size(); i++) {
+        for (int i = 0; i < pulseHistory.size(); i++) {
             if (i > 0) json.append(",");
-            json.append(playerHistory.get(i));
+            json.append(pulseHistory.get(i));
         }
         json.append("]");
 
@@ -139,7 +137,7 @@ public class WebStats extends JavaPlugin implements Listener {
             .append("\"online\":").append(online).append(",")
             .append("\"stats\":{");
 
-        // Custom/General Stats
+        // Custom Stats
         json.append("\"minecraft:custom\":{");
         boolean firstCustom = true;
         for (Statistic stat : Statistic.values()) {
@@ -187,7 +185,6 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }
         json.append("}");
-
         json.append("}}");
 
         sendCloudUpdate(databaseURL + "/players/" + uuid + ".json", json.toString(), "PATCH");
@@ -199,8 +196,6 @@ public class WebStats extends JavaPlugin implements Listener {
                 .header("Content-Type", "application/json")
                 .method(method, HttpRequest.BodyPublishers.ofString(json))
                 .build();
-
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .exceptionally(ex -> null);
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
     }
 }
