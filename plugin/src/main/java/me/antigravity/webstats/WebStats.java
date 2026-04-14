@@ -38,7 +38,7 @@ public class WebStats extends JavaPlugin {
     }
 
     private void loadConfig() {
-        firebaseURL = getConfig().getString("firebase-url", "https://your-project.firebaseio.com/stats.json");
+        firebaseURL = getConfig().getString("firebase-url", "https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/stats.json");
     }
 
     private void syncToCloud() {
@@ -67,8 +67,16 @@ public class WebStats extends JavaPlugin {
                     .append("},")
                     .append("\"minecraft:mined\":{")
                         .append("\"minecraft:stone\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.STONE)).append(",")
-                        .append("\"minecraft:diamond_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DIAMOND_ORE)).append(",")
-                        .append("\"minecraft:deepslate_diamond_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_DIAMOND_ORE))
+                        .append("\"minecraft:cobblestone\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.COBBLESTONE)).append(",")
+                        .append("\"minecraft:deepslate\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE)).append(",")
+                        .append("\"minecraft:diamond_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DIAMOND_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_DIAMOND_ORE)).append(",")
+                        .append("\"minecraft:iron_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.IRON_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_IRON_ORE)).append(",")
+                        .append("\"minecraft:gold_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.GOLD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_GOLD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.NETHER_GOLD_ORE)).append(",")
+                        .append("\"minecraft:coal_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.COAL_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_COAL_ORE)).append(",")
+                        .append("\"minecraft:lapis_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.LAPIS_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_LAPIS_ORE)).append(",")
+                        .append("\"minecraft:redstone_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.REDSTONE_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_REDSTONE_ORE)).append(",")
+                        .append("\"minecraft:emerald_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.EMERALD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_EMERALD_ORE)).append(",")
+                        .append("\"minecraft:ancient_debris\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.ANCIENT_DEBRIS))
                     .append("}")
                 .append("}")
                 .append("}");
