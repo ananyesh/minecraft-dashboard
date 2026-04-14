@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPlayer = null;
     let currentSort = 'none';
 
-    // Configuration: Replace with your Firebase URL
-    const firebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/stats.json';
+    // Configuration: Point to the 'players' object instead of the root
+    const firebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/players.json';
 
     // DOM Elements
     const playerGrid = document.getElementById('player-grid');
@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closePanelBtn = document.getElementById('close-details');
     const onlineCountLabel = document.getElementById('online-count');
     const refreshBtn = document.getElementById('btn-refresh');
+    
+    // Nav Elements
+    const navPlayers = document.getElementById('nav-players');
+    const navLeaderboards = document.getElementById('nav-leaderboards');
 
     // Stats Elements
     const detailUsername = document.getElementById('detail-username');
@@ -35,18 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
      * Fetch player data from Firebase
      */
     async function updateStats() {
-        if (firebaseURL.includes('your-project')) {
-            console.log('Firebase URL not configured. Using mock data.');
-            players = window.minecraftData || [];
-            renderPlayers();
-            return;
-        }
-
         try {
             const response = await fetch(firebaseURL);
             if (response.ok) {
                 const data = await response.json();
-                players = data || [];
+                // Convert Firebase object {uuid: data} to array [{...data}]
+                players = data ? Object.values(data) : [];
                 renderPlayers();
                 
                 // Refresh detail panel if open
@@ -83,6 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalB = Object.values(b.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
                 return totalB - totalA;
             });
+        } else {
+            // Default: Online players first, then alphabetically
+            sorted.sort((a, b) => {
+                if (a.online !== b.online) return b.online ? 1 : -1;
+                return a.username.localeCompare(b.username);
+            });
         }
         
         return sorted;
@@ -104,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const totalMined = Object.values(player.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
 
             return `
-                <div class="player-card" onclick="showPlayerDetails('${player.uuid}')">
+                <div class="player-card ${!player.online ? 'offline-card' : ''}" onclick="showPlayerDetails('${player.uuid}')">
                     <div class="p-avatar">
                         <img src="https://mc-heads.net/avatar/${player.uuid}/80" alt="${player.username}">
                     </div>
@@ -119,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="stat-item">
                             <span class="val">${totalMined}</span>
-                            <span class="lab">Total Mined</span>
+                            <span class="lab">Mined</span>
                         </div>
                     </div>
                 </div>
@@ -163,9 +167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalMined = Object.values(mined).reduce((sum, val) => sum + val, 0);
         statMined.textContent = totalMined;
         
-        // Featured mined blocks
-        statDiamonds.textContent = mined['DIAMOND_ORE'] || mined['DEEPSLATE_DIAMOND_ORE'] || 0;
-        statStone.textContent = mined['STONE'] || mined['DEEPSLATE'] || 0;
+        statDiamonds.textContent = (mined['DIAMOND_ORE'] || 0) + (mined['DEEPSLATE_DIAMOND_ORE'] || 0);
+        statStone.textContent = (mined['STONE'] || 0) + (mined['DEEPSLATE'] || 0);
         
         statPlayerKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
         statMobKills.textContent = player.stats['minecraft:custom']['minecraft:mob_kills'] || 0;
@@ -178,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
-     * Render a generic bar chart for any stat group (Mined or Killed)
+     * Render a generic bar chart
      */
     function renderStatChart(container, dataMap, defaultClass) {
         if (!dataMap || Object.keys(dataMap).length === 0) {
@@ -186,11 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Convert to array and sort by count DESC
         const items = Object.entries(dataMap)
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count)
-            .slice(0, 10); // SHOW TOP 10
+            .slice(0, 10);
 
         const maxVal = Math.max(...items.map(i => i.count), 1);
 
@@ -210,9 +212,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
 
-    /**
-     * Context-aware colors for bars
-     */
     function getContextClass(name, defaultClass) {
         if (name.includes('DIAMOND')) return 'bar-diamond';
         if (name.includes('GOLD')) return 'bar-gold';
@@ -238,11 +237,33 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlayers();
     });
 
+    // Sidebar Navigation
+    navPlayers.addEventListener('click', () => {
+        navPlayers.classList.add('active');
+        navLeaderboards.classList.remove('active');
+        searchInput.value = '';
+        currentSort = 'none';
+        sortBySelect.value = 'none';
+        renderPlayers();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    navLeaderboards.addEventListener('click', () => {
+        navLeaderboards.classList.add('active');
+        navPlayers.classList.remove('active');
+        // Select 'Mined' as default leaderboard
+        currentSort = 'mined';
+        sortBySelect.value = 'mined';
+        renderPlayers();
+        
+        // Scroll to the leaderboard section
+        const viewport = document.querySelector('.viewport');
+        viewport.scrollIntoView({ behavior: 'smooth' });
+    });
+
     refreshBtn.addEventListener('click', updateStats);
 
     // Initial Load
     updateStats();
-    
-    // Auto-refresh every 30 seconds
     setInterval(updateStats, 30000);
 });
