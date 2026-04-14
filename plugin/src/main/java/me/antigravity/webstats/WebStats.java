@@ -48,24 +48,42 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 1L, 1L);
 
-        // Sync Online Players (Every 10s)
+        // Periodic Sync (Every 10s)
         new BukkitRunnable() {
             @Override
             public void run() {
-                syncServerStats();
+                syncServerStats(true);
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     syncPlayer(player, true);
                 }
             }
         }.runTaskTimerAsynchronously(this, 100L, 200L);
 
-        // Pulse (Every 1m)
+        // History Pulse (Every 1m)
         new BukkitRunnable() {
             @Override
             public void run() {
                 recordAdvancedPulse();
             }
         }.runTaskTimerAsynchronously(this, 1200L, 1200L);
+    }
+
+    /**
+     * Safety Shutdown Logic:
+     * When the server stops or restarts, we must force everyone to "Offline"
+     * so they don't stay phantom online on the dashboard.
+     */
+    @Override
+    public void onDisable() {
+        getLogger().info("WebStats shutting down. Syncing final status...");
+        
+        // Mark server as offline
+        syncServerStats(false);
+
+        // Mark all players as offline
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            syncPlayer(player, false);
+        }
     }
 
     private void loadConfig() {
@@ -83,11 +101,15 @@ public class WebStats extends JavaPlugin implements Listener {
         syncPlayer(event.getPlayer(), false);
     }
 
-    private void syncServerStats() {
+    private void syncServerStats(boolean online) {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
         long mspt = calculateMSPT();
-        String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d}", 
-                currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
+        String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d, \"status\":\"%s\"}", 
+                currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers(), online ? "online" : "offline");
+        
+        // We use sendCloudUpdate which is async, but onDisable might finish before it completes.
+        // For onDisable, ideally we'd use a synchronous call, but since Spigot gives plugins 
+        // a moment to shutdown, async with a short timeout often works.
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
@@ -100,9 +122,9 @@ public class WebStats extends JavaPlugin implements Listener {
     }
 
     private void recordAdvancedPulse() {
-        String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
+        String dataPoint = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
                 Bukkit.getOnlinePlayers().size(), currentTps, calculateMSPT(), System.currentTimeMillis() / 1000);
-        pulseHistory.add(dp);
+        pulseHistory.add(dataPoint);
         if (pulseHistory.size() > 60) pulseHistory.removeFirst();
         String json = "[" + String.join(",", pulseHistory) + "]";
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
@@ -113,14 +135,12 @@ public class WebStats extends JavaPlugin implements Listener {
 
         String uuid = player.getUniqueId().toString();
         
-        // Aggregate totals safely
         int mined = 0;
         int placed = 0;
         for (Material m : Material.values()) {
             if (m.isBlock()) {
                 try {
                     mined += player.getStatistic(Statistic.MINE_BLOCK, m);
-                    // Use USE_ITEM for blocks to represent placement in standard Spigot
                     placed += player.getStatistic(Statistic.USE_ITEM, m);
                 } catch (Exception ignored) {}
             }
@@ -135,7 +155,6 @@ public class WebStats extends JavaPlugin implements Listener {
             .append("\"total_placed\":").append(placed).append(",")
             .append("\"minecraft:custom\":{");
 
-        // Custom Stats (UNTYPED)
         boolean first = true;
         for (Statistic s : Statistic.values()) {
             if (s.getType() == Statistic.Type.UNTYPED) {
@@ -151,7 +170,6 @@ public class WebStats extends JavaPlugin implements Listener {
         }
         json.append("},");
 
-        // Mined (Details)
         json.append("\"minecraft:mined\":{");
         first = true;
         for (Material m : Material.values()) {
@@ -168,7 +186,6 @@ public class WebStats extends JavaPlugin implements Listener {
         }
         json.append("},");
 
-        // Killed (Details)
         json.append("\"minecraft:killed\":{");
         first = true;
         for (EntityType type : EntityType.values()) {
