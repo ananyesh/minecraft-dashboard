@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     // State Management
     let players = [];
+    let serverHealth = { tps: 20, mspt: 0, players_online: 0, players_max: 0 };
+    let playerHistory = [];
     let selectedPlayer = null;
     let currentSort = 'none';
 
-    // Configuration: Point to the 'players' object instead of the root
-    const firebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/players.json';
+    // Configuration
+    const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
 
     // DOM Elements
     const playerGrid = document.getElementById('player-grid');
@@ -16,96 +18,108 @@ document.addEventListener('DOMContentLoaded', () => {
     const onlineCountLabel = document.getElementById('online-count');
     const refreshBtn = document.getElementById('btn-refresh');
     
-    // Nav Elements
+    // General Containers
+    const playersSection = document.getElementById('players-section');
+    const healthSection = document.getElementById('health-section');
+    
+    // Health Elements
+    const hTPS = document.getElementById('h-tps');
+    const hMSPT = document.getElementById('h-mspt');
+    const historyGraph = document.getElementById('history-graph');
+
+    // Nav
     const navPlayers = document.getElementById('nav-players');
     const navLeaderboards = document.getElementById('nav-leaderboards');
-
-    // Stats Elements
-    const detailUsername = document.getElementById('detail-username');
-    const detailAvatar = document.getElementById('detail-avatar-body');
-    const statPlaytime = document.getElementById('stat-playtime');
-    const statDeaths = document.getElementById('stat-deaths');
-    const statKills = document.getElementById('stat-kills');
-    const statKD = document.getElementById('stat-kd');
-    const statMined = document.getElementById('stat-mined');
-    const statDiamonds = document.getElementById('stat-diamonds');
-    const statStone = document.getElementById('stat-stone');
-    const statPlayerKills = document.getElementById('stat-player-kills');
-    const statMobKills = document.getElementById('stat-mob-kills');
-    const miningGraph = document.getElementById('mining-graph');
-    const combatGraph = document.getElementById('combat-graph');
+    const navHealth = document.getElementById('nav-health');
 
     /**
-     * Fetch player data from Firebase
+     * Fetch all data from Firebase
      */
-    async function updateStats() {
+    async function updateAllData() {
         try {
-            const response = await fetch(firebaseURL);
-            if (response.ok) {
-                const data = await response.json();
-                // Convert Firebase object {uuid: data} to array [{...data}]
-                players = data ? Object.values(data) : [];
-                renderPlayers();
-                
-                // Refresh detail panel if open
-                if (selectedPlayer) {
-                    const updated = players.find(p => p.uuid === selectedPlayer.uuid);
-                    if (updated) showPlayerDetails(updated.uuid);
-                }
-            } else {
-                players = window.minecraftData || [];
-                renderPlayers();
-            }
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-            players = window.minecraftData || [];
-            renderPlayers();
+            // 1. Fetch Players
+            const pRes = await fetch(baseFirebaseURL + 'players.json');
+            const pData = await pRes.json();
+            players = pData ? Object.values(pData) : [];
+            
+            // 2. Fetch Server Health
+            const sRes = await fetch(baseFirebaseURL + 'server/health.json');
+            const sData = await sRes.json();
+            if (sData) serverHealth = sData;
+
+            // 3. Fetch History
+            const hRes = await fetch(baseFirebaseURL + 'server/history.json');
+            const hData = await hRes.json();
+            if (hData) playerHistory = hData;
+
+            renderAll();
+        } catch (e) {
+            console.error('Fetch Error:', e);
+        }
+    }
+
+    function renderAll() {
+        renderPlayers();
+        renderHealthStatus();
+        renderHistoryGraph();
+
+        // Refresh detail panel if open
+        if (selectedPlayer) {
+            const updated = players.find(p => p.uuid === selectedPlayer.uuid);
+            if (updated) showPlayerDetails(updated.uuid);
         }
     }
 
     /**
-     * Sort players based on current selection
+     * Rendering logic
      */
-    function getSortedPlayers() {
-        let sorted = [...players];
+    function renderHealthStatus() {
+        hTPS.textContent = serverHealth.tps.toFixed(2);
+        hMSPT.textContent = serverHealth.mspt + 'ms';
         
-        if (currentSort === 'playtime') {
-            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:play_one_minute'] || 0) - (a.stats['minecraft:custom']['minecraft:play_one_minute'] || 0));
-        } else if (currentSort === 'kills') {
-            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:player_kills'] || 0) - (a.stats['minecraft:custom']['minecraft:player_kills'] || 0));
-        } else if (currentSort === 'deaths') {
-            sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:deaths'] || 0) - (a.stats['minecraft:custom']['minecraft:deaths'] || 0));
-        } else if (currentSort === 'mined') {
-            sorted.sort((a, b) => {
-                const totalA = Object.values(a.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
-                const totalB = Object.values(b.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
-                return totalB - totalA;
-            });
-        } else {
-            // Default: Online players first, then alphabetically
-            sorted.sort((a, b) => {
-                if (a.online !== b.online) return b.online ? 1 : -1;
-                return a.username.localeCompare(b.username);
-            });
-        }
-        
-        return sorted;
+        // Color coding
+        hTPS.style.color = serverHealth.tps > 18 ? 'var(--online)' : (serverHealth.tps > 15 ? 'var(--accent)' : 'var(--offline)');
+        hMSPT.style.color = serverHealth.mspt < 40 ? 'var(--online)' : (serverHealth.mspt < 50 ? 'var(--accent)' : 'var(--offline)');
     }
 
-    /**
-     * Render player cards to the grid
-     */
+    function renderHistoryGraph() {
+        if (!playerHistory || playerHistory.length < 2) return;
+
+        const width = historyGraph.clientWidth || 800;
+        const height = 200;
+        const maxPlayers = Math.max(...playerHistory, 5);
+        
+        // Points Calculation
+        const stepX = width / (playerHistory.length - 1);
+        const points = playerHistory.map((count, i) => {
+            const x = i * stepX;
+            const y = height - (count / maxPlayers) * (height - 40) - 20;
+            return `${x},${y}`;
+        });
+
+        const dLine = `M ${points.join(' L ')}`;
+        const dArea = `${dLine} L ${width},${height} L 0,${height} Z`;
+
+        historyGraph.innerHTML = `
+            <defs>
+                <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="var(--primary)" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <path d="${dArea}" class="graph-area"></path>
+            <path d="${dLine}" class="graph-path"></path>
+        `;
+    }
+
     function renderPlayers() {
         const searchTerm = searchInput.value.toLowerCase();
-        const sortedPlayers = getSortedPlayers();
-        
-        const filteredPlayers = sortedPlayers.filter(p => 
-            p.username.toLowerCase().includes(searchTerm)
-        );
+        const sorted = getSortedPlayers();
+        const filtered = sorted.filter(p => p.username.toLowerCase().includes(searchTerm));
 
-        playerGrid.innerHTML = filteredPlayers.map(player => {
-            const playtimeHours = Math.floor((player.stats['minecraft:custom']['minecraft:play_one_minute'] || 0) / 20 / 60 / 60);
-            const totalMined = Object.values(player.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
+        playerGrid.innerHTML = filtered.map(player => {
+            const playtimeHours = Math.floor((player.stats['minecraft:custom']['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
+            const totalMined = Object.values(player.stats['minecraft:mined'] || {}).reduce((s, v) => s + v, 0);
 
             return `
                 <div class="player-card ${!player.online ? 'offline-card' : ''}" onclick="showPlayerDetails('${player.uuid}')">
@@ -133,137 +147,105 @@ document.addEventListener('DOMContentLoaded', () => {
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
     }
 
-    /**
-     * Friendly Name Helper
-     */
-    function formatName(raw) {
-        return raw.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    function getSortedPlayers() {
+        let sorted = [...players];
+        if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats['minecraft:custom']['PLAY_ONE_MINUTE'] || 0) - (a.stats['minecraft:custom']['PLAY_ONE_MINUTE'] || 0));
+        else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats['minecraft:custom']['PLAYER_KILLS'] || 0) - (a.stats['minecraft:custom']['PLAYER_KILLS'] || 0));
+        else if (currentSort === 'deaths') sorted.sort((a, b) => (b.stats['minecraft:custom']['DEATHS'] || 0) - (a.stats['minecraft:custom']['DEATHS'] || 0));
+        else if (currentSort === 'mined') sorted.sort((a, b) => {
+            const tA = Object.values(a.stats['minecraft:mined'] || {}).reduce((s, v) => s + v, 0);
+            const tB = Object.values(b.stats['minecraft:mined'] || {}).reduce((s, v) => s + v, 0);
+            return tB - tA;
+        });
+        else sorted.sort((a, b) => (b.online === a.online) ? a.username.localeCompare(b.username) : (b.online ? 1 : -1));
+        return sorted;
     }
 
-    /**
-     * Show player details panel
-     */
     window.showPlayerDetails = (uuid) => {
         const player = players.find(p => p.uuid === uuid);
         if (!player) return;
-
         selectedPlayer = player;
-        
-        // Update basic info
+
         detailUsername.textContent = player.username;
         detailAvatar.src = `https://mc-heads.net/body/${player.uuid}/160`;
+
+        // Render ALL General Stats
+        const custom = player.stats['minecraft:custom'] || {};
+        const generalContainer = document.getElementById('general-stats-container');
         
-        // Update stats
-        const playtimeTicks = player.stats['minecraft:custom']['minecraft:play_one_minute'] || 0;
+        // Featured ones first
+        const playtimeTicks = custom['PLAY_ONE_MINUTE'] || 0;
         statPlaytime.textContent = `${Math.floor(playtimeTicks / 20 / 60 / 60)}h`;
-        statDeaths.textContent = player.stats['minecraft:custom']['minecraft:deaths'] || 0;
-        statKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
-        
-        const kills = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
-        const deaths = player.stats['minecraft:custom']['minecraft:deaths'] || 1;
-        statKD.textContent = (kills / deaths).toFixed(2);
+        statDeaths.textContent = custom['DEATHS'] || 0;
+        statKills.textContent = custom['PLAYER_KILLS'] || 0;
+        statMobKills.textContent = custom['MOB_KILLS'] || 0;
+        statKD.textContent = (custom['PLAYER_KILLS'] / Math.max(1, custom['DEATHS'])).toFixed(2);
 
         const mined = player.stats['minecraft:mined'] || {};
-        const totalMined = Object.values(mined).reduce((sum, val) => sum + val, 0);
-        statMined.textContent = totalMined;
-        
+        statMined.textContent = Object.values(mined).reduce((s, v) => s + v, 0);
         statDiamonds.textContent = (mined['DIAMOND_ORE'] || 0) + (mined['DEEPSLATE_DIAMOND_ORE'] || 0);
-        statStone.textContent = (mined['STONE'] || 0) + (mined['DEEPSLATE'] || 0);
-        
-        statPlayerKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
-        statMobKills.textContent = player.stats['minecraft:custom']['minecraft:mob_kills'] || 0;
 
-        // Render Graphs
+        // Inject ALL other general stats
+        const excluded = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS'];
+        let extraHtml = '';
+        Object.entries(custom).forEach(([key, val]) => {
+            if (!excluded.includes(key)) {
+                extraHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`;
+            }
+        });
+        generalContainer.innerHTML = `
+            <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${statPlaytime.textContent}</span></div>
+            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value">${statDeaths.textContent}</span></div>
+            ${extraHtml}
+        `;
+
         renderStatChart(miningGraph, mined, 'bar-stone');
         renderStatChart(combatGraph, player.stats['minecraft:killed'] || {}, 'bar-emerald');
-        
         detailsPanel.classList.add('open');
     };
 
-    /**
-     * Render a generic bar chart
-     */
     function renderStatChart(container, dataMap, defaultClass) {
-        if (!dataMap || Object.keys(dataMap).length === 0) {
-            container.innerHTML = '<div class="empty-msg">No data available yet.</div>';
-            return;
-        }
-
-        const items = Object.entries(dataMap)
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
-
-        const maxVal = Math.max(...items.map(i => i.count), 1);
-
-        container.innerHTML = items.map(item => {
-            const percent = (item.count / maxVal) * 100;
-            const barClass = getContextClass(item.name, defaultClass);
-            
-            return `
-                <div class="graph-row">
-                    <span class="graph-label">${formatName(item.name)}</span>
-                    <div class="bar-container">
-                        <div class="bar-fill ${barClass}" style="width: ${percent}%"></div>
-                    </div>
-                    <span class="graph-value">${item.count}</span>
-                </div>
-            `;
-        }).join('');
+        const items = Object.entries(dataMap || {}).map(([n, c]) => ({ n, c })).sort((a, b) => b.c - a.c).slice(0, 10);
+        if (items.length === 0) { container.innerHTML = '<div class="empty-msg">No data.</div>'; return; }
+        const max = Math.max(...items.map(i => i.c), 1);
+        container.innerHTML = items.map(i => `<div class="graph-row"><span class="graph-label">${formatName(i.n)}</span><div class="bar-container"><div class="bar-fill ${getContextClass(i.n, defaultClass)}" style="width: ${(i.c/max)*100}%"></div></div><span class="graph-value">${i.c}</span></div>`).join('');
     }
 
-    function getContextClass(name, defaultClass) {
-        if (name.includes('DIAMOND')) return 'bar-diamond';
-        if (name.includes('GOLD')) return 'bar-gold';
-        if (name.includes('IRON')) return 'bar-iron';
-        if (name.includes('COAL')) return 'bar-coal';
-        if (name.includes('EMERALD')) return 'bar-emerald';
-        if (name.includes('REDSTONE')) return 'bar-redstone';
-        if (name.includes('LAPIS')) return 'bar-lapis';
-        if (name.includes('ANCIENT_DEBRIS')) return 'bar-ancient';
-        return defaultClass;
-    }
+    function formatName(raw) { return raw.toLowerCase().replace(/minecraft:/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
+    function getContextClass(n, d) { return n.includes('DIAMOND') ? 'bar-diamond' : (n.includes('GOLD') ? 'bar-gold' : (n.includes('IRON') ? 'bar-iron' : d)); }
 
-    // Event Listeners
-    closePanelBtn.addEventListener('click', () => {
-        detailsPanel.classList.remove('open');
-        selectedPlayer = null;
-    });
-
-    searchInput.addEventListener('input', renderPlayers);
-    
-    sortBySelect.addEventListener('change', (e) => {
-        currentSort = e.target.value;
-        renderPlayers();
-    });
-
-    // Sidebar Navigation
-    navPlayers.addEventListener('click', () => {
-        navPlayers.classList.add('active');
-        navLeaderboards.classList.remove('active');
-        searchInput.value = '';
-        currentSort = 'none';
-        sortBySelect.value = 'none';
-        renderPlayers();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    navLeaderboards.addEventListener('click', () => {
-        navLeaderboards.classList.add('active');
+    // Navigation Logic
+    function switchTab(tab) {
         navPlayers.classList.remove('active');
-        // Select 'Mined' as default leaderboard
-        currentSort = 'mined';
-        sortBySelect.value = 'mined';
-        renderPlayers();
-        
-        // Scroll to the leaderboard section
-        const viewport = document.querySelector('.viewport');
-        viewport.scrollIntoView({ behavior: 'smooth' });
-    });
+        navLeaderboards.classList.remove('active');
+        navHealth.classList.remove('active');
+        playersSection.style.display = 'none';
+        healthSection.style.display = 'none';
 
-    refreshBtn.addEventListener('click', updateStats);
+        if (tab === 'players') {
+            navPlayers.classList.add('active');
+            playersSection.style.display = 'block';
+        } else if (tab === 'leaderboard') {
+            navLeaderboards.classList.add('active');
+            playersSection.style.display = 'block';
+            currentSort = 'mined';
+            sortBySelect.value = 'mined';
+            renderPlayers();
+        } else if (tab === 'health') {
+            navHealth.classList.add('active');
+            healthSection.style.display = 'block';
+            setTimeout(renderHistoryGraph, 100); // Trigger graph redraw
+        }
+    }
 
-    // Initial Load
-    updateStats();
-    setInterval(updateStats, 30000);
+    navPlayers.addEventListener('click', () => switchTab('players'));
+    navLeaderboards.addEventListener('click', () => switchTab('leaderboard'));
+    navHealth.addEventListener('click', () => switchTab('health'));
+    
+    closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
+    sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderPlayers(); });
+    refreshBtn.addEventListener('click', updateAllData);
+
+    updateAllData();
+    setInterval(updateAllData, 30000);
 });
