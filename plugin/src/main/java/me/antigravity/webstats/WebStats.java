@@ -48,7 +48,7 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 1L, 1L);
 
-        // Periodic Sync (Every 10s)
+        // Sync Online Players (Every 10s)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -59,7 +59,7 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimerAsynchronously(this, 100L, 200L);
 
-        // History Pulse (Every 1m)
+        // Pulse (Every 1m)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -68,19 +68,9 @@ public class WebStats extends JavaPlugin implements Listener {
         }.runTaskTimerAsynchronously(this, 1200L, 1200L);
     }
 
-    /**
-     * Safety Shutdown Logic:
-     * When the server stops or restarts, we must force everyone to "Offline"
-     * so they don't stay phantom online on the dashboard.
-     */
     @Override
     public void onDisable() {
-        getLogger().info("WebStats shutting down. Syncing final status...");
-        
-        // Mark server as offline
         syncServerStats(false);
-
-        // Mark all players as offline
         for (Player player : Bukkit.getOnlinePlayers()) {
             syncPlayer(player, false);
         }
@@ -106,10 +96,6 @@ public class WebStats extends JavaPlugin implements Listener {
         long mspt = calculateMSPT();
         String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d, \"status\":\"%s\"}", 
                 currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers(), online ? "online" : "offline");
-        
-        // We use sendCloudUpdate which is async, but onDisable might finish before it completes.
-        // For onDisable, ideally we'd use a synchronous call, but since Spigot gives plugins 
-        // a moment to shutdown, async with a short timeout often works.
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
@@ -122,18 +108,35 @@ public class WebStats extends JavaPlugin implements Listener {
     }
 
     private void recordAdvancedPulse() {
-        String dataPoint = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
+        String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
                 Bukkit.getOnlinePlayers().size(), currentTps, calculateMSPT(), System.currentTimeMillis() / 1000);
-        pulseHistory.add(dataPoint);
+        pulseHistory.add(dp);
         if (pulseHistory.size() > 60) pulseHistory.removeFirst();
         String json = "[" + String.join(",", pulseHistory) + "]";
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
+    }
+
+    /**
+     * SkinsRestorer Integration (Reflection-based)
+     * Detects if SkinsRestorer is present and fetches the skin value/name.
+     */
+    private String getSkinName(Player player) {
+        try {
+            if (Bukkit.getPluginManager().isPluginEnabled("SkinsRestorer")) {
+                Object api = Class.forName("net.skinsrestorer.api.SkinsRestorerProvider").getMethod("get").invoke(null);
+                Object playerStorage = api.getClass().getMethod("getPlayerStorage").invoke(api);
+                Object skinId = playerStorage.getClass().getMethod("getSkinIdOfPlayer", java.util.UUID.class).invoke(playerStorage, player.getUniqueId());
+                if (skinId != null) return skinId.toString();
+            }
+        } catch (Exception ignored) {}
+        return player.getName(); // Fallback to username
     }
 
     private void syncPlayer(Player player, boolean online) {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
 
         String uuid = player.getUniqueId().toString();
+        String skin = getSkinName(player);
         
         int mined = 0;
         int placed = 0;
@@ -149,6 +152,7 @@ public class WebStats extends JavaPlugin implements Listener {
         StringBuilder json = new StringBuilder("{");
         json.append("\"username\":\"").append(player.getName()).append("\",")
             .append("\"uuid\":\"").append(uuid).append("\",")
+            .append("\"skin\":\"").append(skin).append("\",")
             .append("\"online\":").append(online).append(",")
             .append("\"stats\":{")
             .append("\"total_mined\":").append(mined).append(",")
