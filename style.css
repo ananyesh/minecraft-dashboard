@@ -117,7 +117,39 @@ body {
 
 .p-avatar { width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 16px; overflow: hidden; background: #000; }
 .p-avatar img { width: 100%; height: 100%; }
-.p-name { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.p-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+
+.p-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 30px; letter-spacing: 0.5px;
+    transition: var(--transition);
+}
+
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.p-status.online { 
+    background: rgba(16, 185, 129, 0.08); color: var(--online); 
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+}
+.p-status.online .status-dot { 
+    background: var(--online); 
+    box-shadow: 0 0 10px var(--online);
+    animation: pulse-green 2s infinite;
+}
+
+.p-status.offline { 
+    background: rgba(255, 255, 255, 0.03); color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.p-status.offline .status-dot { background: var(--text-muted); opacity: 0.5; }
+
+@keyframes pulse-green {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+    100% { transform: scale(1); opacity: 1; }
+}
 
 /* Details Panel (FIXED SCROLL) */
 .details-panel {
@@ -139,12 +171,26 @@ body {
 }
 
 .close-panel {
-    position: absolute; top: 32px; left: -40px; width: 40px; height: 40px;
-    background: var(--primary); color: #000; border: none; border-radius: 10px 0 0 10px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: var(--transition);
+    position: absolute; top: 20px; right: 20px; width: 36px; height: 36px;
+    background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--card-border);
+    border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: var(--transition); z-index: 101;
 }
-.close-panel:hover { padding-right: 10px; }
+.close-panel:hover { background: var(--primary); color: #000; border-color: var(--primary); }
+
+/* Bar Graphs Fix */
+.graph-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.graph-label { flex: 1.5; font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.bar-container { flex: 3; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.graph-value { width: 45px; text-align: right; font-size: 13px; font-weight: 700; color: var(--text-main); font-family: 'JetBrains Mono', monospace; }
+
+.bar-stone { background: #4b5563; }
+.bar-diamond { background: #06b6d4; box-shadow: 0 0 10px rgba(6,182,212,0.3); }
+.bar-gold { background: #eab308; box-shadow: 0 0 10px rgba(234,179,8,0.3); }
+.bar-iron { background: #94a3b8; box-shadow: 0 0 10px rgba(148,163,184,0.3); }
+.bar-emerald { background: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.3); }
+.empty-msg { color: var(--text-muted); font-size: 13px; font-style: italic; opacity: 0.5; padding: 10px 0; }
 
 .player-profile-header { text-align: center; }
 .avatar-large-container { width: 140px; height: 140px; margin: 0 auto 20px; }
@@ -178,6 +224,23 @@ body {
 .line-players { stroke: var(--player-color); }
 .line-tps { stroke: var(--tps-color); }
 .line-mspt { stroke: var(--mspt-color); opacity: 0.6; stroke-dasharray: 4; }
+
+/* Header Actions */
+.header-actions { display: flex; align-items: center; gap: 20px; }
+
+.icon-btn {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    color: var(--text-main); width: 42px; height: 42px; border-radius: 12px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+
+.icon-btn:hover {
+    background: var(--primary); color: #000; border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-glow); transform: rotate(180deg);
+}
+
+.icon-btn i { font-size: 18px; }
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
