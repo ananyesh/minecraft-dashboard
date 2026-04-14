@@ -3,6 +3,7 @@ package me.antigravity.webstats;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -26,7 +27,7 @@ public class WebStats extends JavaPlugin {
         saveDefaultConfig();
         loadConfig();
 
-        getLogger().info("WebStats enabled! Syncing to Firebase Cloud.");
+        getLogger().info("WebStats enabled! Dynamic tracking is active.");
 
         // Start the cloud sync task (runs Every 10 seconds)
         new BukkitRunnable() {
@@ -64,21 +65,41 @@ public class WebStats extends JavaPlugin {
                         .append("\"minecraft:deaths\":").append(player.getStatistic(Statistic.DEATHS)).append(",")
                         .append("\"minecraft:player_kills\":").append(player.getStatistic(Statistic.PLAYER_KILLS)).append(",")
                         .append("\"minecraft:mob_kills\":").append(player.getStatistic(Statistic.MOB_KILLS))
-                    .append("},")
-                    .append("\"minecraft:mined\":{")
-                        .append("\"minecraft:stone\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.STONE)).append(",")
-                        .append("\"minecraft:cobblestone\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.COBBLESTONE)).append(",")
-                        .append("\"minecraft:deepslate\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE)).append(",")
-                        .append("\"minecraft:diamond_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.DIAMOND_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_DIAMOND_ORE)).append(",")
-                        .append("\"minecraft:iron_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.IRON_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_IRON_ORE)).append(",")
-                        .append("\"minecraft:gold_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.GOLD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_GOLD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.NETHER_GOLD_ORE)).append(",")
-                        .append("\"minecraft:coal_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.COAL_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_COAL_ORE)).append(",")
-                        .append("\"minecraft:lapis_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.LAPIS_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_LAPIS_ORE)).append(",")
-                        .append("\"minecraft:redstone_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.REDSTONE_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_REDSTONE_ORE)).append(",")
-                        .append("\"minecraft:emerald_ore\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.EMERALD_ORE) + player.getStatistic(Statistic.MINE_BLOCK, Material.DEEPSLATE_EMERALD_ORE)).append(",")
-                        .append("\"minecraft:ancient_debris\":").append(player.getStatistic(Statistic.MINE_BLOCK, Material.ANCIENT_DEBRIS))
-                    .append("}")
-                .append("}")
+                    .append("},");
+
+            // Dynamic Mined Blocks
+            json.append("\"minecraft:mined\":{");
+            boolean firstMined = true;
+            for (Material mat : Material.values()) {
+                if (mat.isBlock()) {
+                    int val = player.getStatistic(Statistic.MINE_BLOCK, mat);
+                    if (val > 0) {
+                        if (!firstMined) json.append(",");
+                        json.append("\"").append(mat.name()).append("\":").append(val);
+                        firstMined = false;
+                    }
+                }
+            }
+            json.append("},");
+
+            // Dynamic Mob Kills
+            json.append("\"minecraft:killed\":{");
+            boolean firstKilled = true;
+            for (EntityType type : EntityType.values()) {
+                if (type.isAlive()) {
+                    try {
+                        int val = player.getStatistic(Statistic.KILL_ENTITY, type);
+                        if (val > 0) {
+                            if (!firstKilled) json.append(",");
+                            json.append("\"").append(type.name()).append("\":").append(val);
+                            firstKilled = false;
+                        }
+                    } catch (IllegalArgumentException ignored) {} 
+                }
+            }
+            json.append("}");
+
+            json.append("}")
                 .append("}");
         }
         json.append("]");
