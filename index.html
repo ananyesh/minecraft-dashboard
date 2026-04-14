@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minecraft Cloud Stats</title>
+    <title>QuartzSMP | Dashboard</title>
     <!-- Primary Styles -->
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <!-- Icons -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -20,8 +19,10 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <span class="logo-icon">💎</span>
-                    <h1 class="logo-text">MINE<span>STATS</span></h1>
+                    <div class="logo-img-wrapper">
+                        <span class="logo-icon">💠</span>
+                    </div>
+                    <h1 class="logo-text">QUARTZ<span>SMP</span></h1>
                 </div>
             </div>
 
@@ -35,7 +36,7 @@
                     <span>Leaderboards</span>
                 </div>
                 <div class="nav-item" id="nav-health">
-                    <i class="fa-solid fa-heart-pulse"></i>
+                    <i class="fa-solid fa-microchip"></i>
                     <span>Server Health</span>
                 </div>
             </nav>
@@ -43,7 +44,7 @@
             <div class="server-status-card">
                 <div class="status-header">
                     <div class="status-indicator online"></div>
-                    <span>Server Active</span>
+                    <span>Cluster Online</span>
                 </div>
                 <div class="server-metrics">
                     <div class="metric">
@@ -54,7 +55,7 @@
             </div>
 
             <div class="sidebar-footer">
-                <p>Ver 2.5 Cloud Native</p>
+                <p>QuartzEngine v2.6</p>
             </div>
         </aside>
 
@@ -63,11 +64,11 @@
             <header class="content-header">
                 <div class="search-bar">
                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="player-search" placeholder="Search players by username...">
+                    <input type="text" id="player-search" placeholder="Search player data...">
                 </div>
                 <div class="header-actions">
                     <button class="btn btn-secondary" id="btn-refresh">
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <i class="fa-solid fa-sync"></i>
                     </button>
                     <div class="user-profile">
                         <img src="https://mc-heads.net/avatar/steve/38" alt="Profile">
@@ -80,13 +81,13 @@
                 <section id="players-section">
                     <div class="section-title">
                         <div class="title-left">
-                            <h2>Player Roster</h2>
-                            <p>Overview of everyone currently on the server.</p>
+                            <h2>Player Database</h2>
+                            <p>Real-time telemetry for all verified SMP members.</p>
                         </div>
                         <div class="sort-controls">
-                            <label for="sort-by">Rank by:</label>
+                            <label for="sort-by">Sort by:</label>
                             <select id="sort-by">
-                                <option value="none">Default</option>
+                                <option value="none">Standard</option>
                                 <option value="playtime">Playtime</option>
                                 <option value="mined">Blocks Mined</option>
                                 <option value="kills">Kills</option>
@@ -96,45 +97,53 @@
                     </div>
 
                     <div class="player-grid" id="player-grid">
-                        <!-- Player cards will be injected here via app.js -->
                         <div class="loading-state">
-                            <p>Connecting to Firebase...</p>
+                            <div class="spinner"></div>
+                            <p>Fetching encrypted data...</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Server Health Section (Hidden initially) -->
+                <!-- Server Health Section -->
                 <section id="health-section" style="display: none;">
                     <div class="section-title">
                         <div class="title-left">
-                            <h2>Server Performance</h2>
-                            <p>Real-time metrics and historical player counts.</p>
+                            <h2>Health Analytics</h2>
+                            <p>Deep-dive into server performance and stability.</p>
                         </div>
                     </div>
 
                     <div class="health-grid">
                         <div class="health-card">
-                            <span class="h-label">Server TPS</span>
+                            <span class="h-label">Engine TPS</span>
                             <span class="h-value" id="h-tps">20.00</span>
-                            <span class="h-desc">Ticks Per Second</span>
+                            <span class="h-desc">Speed Efficiency</span>
                         </div>
                         <div class="health-card">
-                            <span class="h-label">Tick Lag (MSPT)</span>
+                            <span class="h-label">Tick Latency</span>
                             <span class="h-value" id="h-mspt">0ms</span>
-                            <span class="h-desc">Target: &lt;50ms</span>
+                            <span class="h-desc">Target &lt; 50ms</span>
                         </div>
                     </div>
 
-                    <div class="graph-container">
-                        <h3>Player Activity (Last 60 Minutes)</h3>
-                        <div class="graph-wrapper">
-                            <svg id="history-graph" width="100%" height="200" preserveAspectRatio="none">
-                                <!-- SVG Graph Path injected here -->
+                    <div class="advanced-graph-card">
+                        <div class="graph-header">
+                            <h3>1-Hour Performance History</h3>
+                            <div class="graph-legend">
+                                <span class="leg-item"><i class="dot p-dot"></i> Players</span>
+                                <span class="leg-item"><i class="dot t-dot"></i> TPS</span>
+                                <span class="leg-item"><i class="dot m-dot"></i> MSPT</span>
+                            </div>
+                        </div>
+                        <div class="graph-wrapper" id="graph-wrapper">
+                            <svg id="history-graph" width="100%" height="240" preserveAspectRatio="none">
+                                <!-- Triple Line Graph -->
                             </svg>
+                            <div id="graph-tooltip" class="graph-tooltip"></div>
                         </div>
                         <div class="graph-labels">
-                            <span>60m ago</span>
-                            <span>Now</span>
+                            <span>-60 minutes</span>
+                            <span>Live Data</span>
                         </div>
                     </div>
                 </section>
@@ -144,7 +153,7 @@
         <!-- Player Details Side Panel -->
         <div class="details-panel" id="details-panel">
             <button class="close-panel" id="close-details">
-                <i class="fa-solid fa-xmark"></i>
+                <i class="fa-solid fa-chevron-right"></i>
             </button>
             
             <div class="player-profile-header">
@@ -155,69 +164,43 @@
             </div>
 
             <div class="stat-group">
-                <h3 class="group-title">General Stats</h3>
+                <h3 class="group-title">Core Performance</h3>
                 <div class="stat-grid" id="general-stats-container">
-                    <div class="stat-card">
-                        <span class="stat-label">Playtime</span>
-                        <span class="stat-value" id="stat-playtime">0h</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Deaths</span>
-                        <span class="stat-value" id="stat-deaths">0</span>
-                    </div>
+                    <!-- Dynamic stats injected here -->
                 </div>
             </div>
 
             <div class="stat-group">
-                <h3 class="group-title">Mining Highlights</h3>
+                <h3 class="group-title">Resource Collection</h3>
                 <div class="stat-grid">
                     <div class="stat-card">
                         <span class="stat-label">Total Mined</span>
                         <span class="stat-value" id="stat-mined">0</span>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Diamonds</span>
-                        <span class="stat-value" id="stat-diamonds">0</span>
-                    </div>
                 </div>
-                
                 <div class="graph-section">
-                    <h4>Mined blocks breakdown</h4>
-                    <div class="mining-graph" id="mining-graph">
-                        <!-- Mined bars -->
-                    </div>
+                    <h4>Top 10 Blocks Mined</h4>
+                    <div class="mining-graph" id="mining-graph"></div>
                 </div>
             </div>
 
             <div class="stat-group">
-                <h3 class="group-title">Combat & Skills</h3>
+                <h3 class="group-title">Combat Records</h3>
                 <div class="stat-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">Player Kills</span>
-                        <span class="stat-value" id="stat-kills">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">K/D Ratio</span>
-                        <span class="stat-value" id="stat-kd">0.00</span>
-                    </div>
                     <div class="stat-card">
                         <span class="stat-label">Mob Kills</span>
                         <span class="stat-value" id="stat-mob-kills">0</span>
                     </div>
                 </div>
-
                 <div class="graph-section">
-                    <h4>Mob Kills breakdown</h4>
-                    <div class="mining-graph" id="combat-graph">
-                        <!-- Combat bars -->
-                    </div>
+                    <h4>Hostile Defeats</h4>
+                    <div class="mining-graph" id="combat-graph"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="minecraft_data.js"></script> <!-- Mock Data Fallback -->
     <script src="app.js"></script>
 </body>
 </html>
