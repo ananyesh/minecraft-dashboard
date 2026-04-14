@@ -18,7 +18,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.LinkedList;
-import java.util.logging.Level;
 
 public class WebStats extends JavaPlugin implements Listener {
 
@@ -27,10 +26,7 @@ public class WebStats extends JavaPlugin implements Listener {
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
-    // High-fidelity history objects
     private final LinkedList<String> pulseHistory = new LinkedList<>();
-
-    // Manual TPS Monitoring
     private long lastTick = System.currentTimeMillis();
     private double currentTps = 20.0;
 
@@ -38,11 +34,9 @@ public class WebStats extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         loadConfig();
-
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("WebStats enabled! QuartzSMP Theme support active.");
 
-        // TPS Monitor Task
+        // TPS Monitor
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -54,7 +48,7 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 1L, 1L);
 
-        // Periodic Sync (Every 10s)
+        // Sync Online Players (Every 10s)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -65,7 +59,7 @@ public class WebStats extends JavaPlugin implements Listener {
             }
         }.runTaskTimerAsynchronously(this, 100L, 200L);
 
-        // Record Pulse (Every 1 minute)
+        // Pulse (Every 1m)
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -91,11 +85,9 @@ public class WebStats extends JavaPlugin implements Listener {
 
     private void syncServerStats() {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
-
         long mspt = calculateMSPT();
         String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d}", 
                 currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers());
-
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
@@ -108,84 +100,90 @@ public class WebStats extends JavaPlugin implements Listener {
     }
 
     private void recordAdvancedPulse() {
-        int p = Bukkit.getOnlinePlayers().size();
-        double t = currentTps;
-        long m = calculateMSPT();
-        long ts = System.currentTimeMillis() / 1000;
-
-        String dataPoint = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", p, t, m, ts);
-        pulseHistory.add(dataPoint);
+        String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
+                Bukkit.getOnlinePlayers().size(), currentTps, calculateMSPT(), System.currentTimeMillis() / 1000);
+        pulseHistory.add(dp);
         if (pulseHistory.size() > 60) pulseHistory.removeFirst();
-
-        StringBuilder json = new StringBuilder("[");
-        for (int i = 0; i < pulseHistory.size(); i++) {
-            if (i > 0) json.append(",");
-            json.append(pulseHistory.get(i));
-        }
-        json.append("]");
-
-        sendCloudUpdate(databaseURL + "/server/history.json", json.toString(), "PUT");
+        String json = "[" + String.join(",", pulseHistory) + "]";
+        sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
     }
 
     private void syncPlayer(Player player, boolean online) {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
 
         String uuid = player.getUniqueId().toString();
+        
+        // Aggregate totals safely
+        int mined = 0;
+        int placed = 0;
+        for (Material m : Material.values()) {
+            if (m.isBlock()) {
+                try {
+                    mined += player.getStatistic(Statistic.MINE_BLOCK, m);
+                    // Use USE_ITEM for blocks to represent placement in standard Spigot
+                    placed += player.getStatistic(Statistic.USE_ITEM, m);
+                } catch (Exception ignored) {}
+            }
+        }
+
         StringBuilder json = new StringBuilder("{");
         json.append("\"username\":\"").append(player.getName()).append("\",")
             .append("\"uuid\":\"").append(uuid).append("\",")
             .append("\"online\":").append(online).append(",")
-            .append("\"stats\":{");
+            .append("\"stats\":{")
+            .append("\"total_mined\":").append(mined).append(",")
+            .append("\"total_placed\":").append(placed).append(",")
+            .append("\"minecraft:custom\":{");
 
-        // Custom Stats
-        json.append("\"minecraft:custom\":{");
-        boolean firstCustom = true;
-        for (Statistic stat : Statistic.values()) {
-            if (stat.getType() == Statistic.Type.UNTYPED) {
+        // Custom Stats (UNTYPED)
+        boolean first = true;
+        for (Statistic s : Statistic.values()) {
+            if (s.getType() == Statistic.Type.UNTYPED) {
                 try {
-                    int val = player.getStatistic(stat);
+                    int val = player.getStatistic(s);
                     if (val > 0) {
-                        if (!firstCustom) json.append(",");
-                        json.append("\"").append(stat.name()).append("\":").append(val);
-                        firstCustom = false;
+                        if (!first) json.append(",");
+                        json.append("\"").append(s.name()).append("\":").append(val);
+                        first = false;
                     }
                 } catch (Exception ignored) {}
             }
         }
         json.append("},");
 
-        // Mined Blocks
+        // Mined (Details)
         json.append("\"minecraft:mined\":{");
-        boolean firstMined = true;
-        for (Material mat : Material.values()) {
-            if (mat.isBlock()) {
-                int val = player.getStatistic(Statistic.MINE_BLOCK, mat);
-                if (val > 0) {
-                    if (!firstMined) json.append(",");
-                    json.append("\"").append(mat.name()).append("\":").append(val);
-                    firstMined = false;
-                }
+        first = true;
+        for (Material m : Material.values()) {
+            if (m.isBlock()) {
+                try {
+                    int val = player.getStatistic(Statistic.MINE_BLOCK, m);
+                    if (val > 0) {
+                        if (!first) json.append(",");
+                        json.append("\"").append(m.name()).append("\":").append(val);
+                        first = false;
+                    }
+                } catch (Exception ignored) {}
             }
         }
         json.append("},");
 
-        // Mob Kills
+        // Killed (Details)
         json.append("\"minecraft:killed\":{");
-        boolean firstKilled = true;
+        first = true;
         for (EntityType type : EntityType.values()) {
             if (type.isAlive()) {
                 try {
                     int val = player.getStatistic(Statistic.KILL_ENTITY, type);
                     if (val > 0) {
-                        if (!firstKilled) json.append(",");
+                        if (!first) json.append(",");
                         json.append("\"").append(type.name()).append("\":").append(val);
-                        firstKilled = false;
+                        first = false;
                     }
                 } catch (Exception ignored) {}
             }
         }
-        json.append("}");
-        json.append("}}");
+        json.append("}}}");
 
         sendCloudUpdate(databaseURL + "/players/" + uuid + ".json", json.toString(), "PATCH");
     }
