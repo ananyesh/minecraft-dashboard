@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const statPlayerKills = document.getElementById('stat-player-kills');
     const statMobKills = document.getElementById('stat-mob-kills');
     const miningGraph = document.getElementById('mining-graph');
+    const combatGraph = document.getElementById('combat-graph');
 
     /**
      * Fetch player data from Firebase
@@ -47,6 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
                 players = data || [];
                 renderPlayers();
+                
+                // Refresh detail panel if open
+                if (selectedPlayer) {
+                    const updated = players.find(p => p.uuid === selectedPlayer.uuid);
+                    if (updated) showPlayerDetails(updated.uuid);
+                }
             } else {
                 players = window.minecraftData || [];
                 renderPlayers();
@@ -72,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             sorted.sort((a, b) => (b.stats['minecraft:custom']['minecraft:deaths'] || 0) - (a.stats['minecraft:custom']['minecraft:deaths'] || 0));
         } else if (currentSort === 'mined') {
             sorted.sort((a, b) => {
-                const totalA = Object.values(a.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
-                const totalB = Object.values(b.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
+                const totalA = Object.values(a.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
+                const totalB = Object.values(b.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
                 return totalB - totalA;
             });
         }
@@ -94,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         playerGrid.innerHTML = filteredPlayers.map(player => {
             const playtimeHours = Math.floor((player.stats['minecraft:custom']['minecraft:play_one_minute'] || 0) / 20 / 60 / 60);
-            const totalMined = Object.values(player.stats['minecraft:mined']).reduce((sum, val) => sum + val, 0);
+            const totalMined = Object.values(player.stats['minecraft:mined'] || {}).reduce((sum, val) => sum + val, 0);
 
             return `
                 <div class="player-card" onclick="showPlayerDetails('${player.uuid}')">
@@ -112,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div class="stat-item">
                             <span class="val">${totalMined}</span>
-                            <span class="lab">Mined</span>
+                            <span class="lab">Total Mined</span>
                         </div>
                     </div>
                 </div>
@@ -120,6 +127,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
+    }
+
+    /**
+     * Friendly Name Helper
+     */
+    function formatName(raw) {
+        return raw.toLowerCase().split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
     /**
@@ -145,63 +159,76 @@ document.addEventListener('DOMContentLoaded', () => {
         const deaths = player.stats['minecraft:custom']['minecraft:deaths'] || 1;
         statKD.textContent = (kills / deaths).toFixed(2);
 
-        const mined = player.stats['minecraft:mined'];
+        const mined = player.stats['minecraft:mined'] || {};
         const totalMined = Object.values(mined).reduce((sum, val) => sum + val, 0);
         statMined.textContent = totalMined;
-        statDiamonds.textContent = mined['minecraft:diamond_ore'] || 0;
-        statStone.textContent = mined['minecraft:stone'] || 0;
+        
+        // Featured mined blocks
+        statDiamonds.textContent = mined['DIAMOND_ORE'] || mined['DEEPSLATE_DIAMOND_ORE'] || 0;
+        statStone.textContent = mined['STONE'] || mined['DEEPSLATE'] || 0;
         
         statPlayerKills.textContent = player.stats['minecraft:custom']['minecraft:player_kills'] || 0;
         statMobKills.textContent = player.stats['minecraft:custom']['minecraft:mob_kills'] || 0;
 
-        renderMiningGraph(mined);
+        // Render Graphs
+        renderStatChart(miningGraph, mined, 'bar-stone');
+        renderStatChart(combatGraph, player.stats['minecraft:killed'] || {}, 'bar-emerald');
         
         detailsPanel.classList.add('open');
     };
 
     /**
-     * Render mini bar graph for mining stats
+     * Render a generic bar chart for any stat group (Mined or Killed)
      */
-    function renderMiningGraph(mined) {
-        const blocks = [
-            { key: 'minecraft:diamond_ore', label: 'Diamond', class: 'bar-diamond' },
-            { key: 'minecraft:iron_ore', label: 'Iron', class: 'bar-iron' },
-            { key: 'minecraft:gold_ore', label: 'Gold', class: 'bar-gold' },
-            { key: 'minecraft:coal_ore', label: 'Coal', class: 'bar-coal' },
-            { key: 'minecraft:emerald_ore', label: 'Emerald', class: 'bar-emerald' },
-            { key: 'minecraft:redstone_ore', label: 'Redstone', class: 'bar-redstone' },
-            { key: 'minecraft:ancient_debris', label: 'Netherite', class: 'bar-ancient' },
-            { key: 'minecraft:stone', label: 'Stone', class: 'bar-stone' }
-        ];
-
-        // Find max for scaling
-        const maxVal = Math.max(...blocks.map(b => mined[b.key] || 0), 1);
-
-        miningGraph.innerHTML = blocks
-            .filter(b => (mined[b.key] || 0) > 0)
-            .map(block => {
-                const val = mined[block.key] || 0;
-                const percent = (val / maxVal) * 100;
-                
-                return `
-                    <div class="graph-row">
-                        <span class="graph-label">${block.label}</span>
-                        <div class="bar-container">
-                            <div class="bar-fill ${block.class}" style="width: ${percent}%"></div>
-                        </div>
-                        <span class="graph-value">${val}</span>
-                    </div>
-                `;
-            }).join('');
-            
-        if (miningGraph.innerHTML === '') {
-            miningGraph.innerHTML = '<div class="empty-msg">No mining data yet.</div>';
+    function renderStatChart(container, dataMap, defaultClass) {
+        if (!dataMap || Object.keys(dataMap).length === 0) {
+            container.innerHTML = '<div class="empty-msg">No data available yet.</div>';
+            return;
         }
+
+        // Convert to array and sort by count DESC
+        const items = Object.entries(dataMap)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10); // SHOW TOP 10
+
+        const maxVal = Math.max(...items.map(i => i.count), 1);
+
+        container.innerHTML = items.map(item => {
+            const percent = (item.count / maxVal) * 100;
+            const barClass = getContextClass(item.name, defaultClass);
+            
+            return `
+                <div class="graph-row">
+                    <span class="graph-label">${formatName(item.name)}</span>
+                    <div class="bar-container">
+                        <div class="bar-fill ${barClass}" style="width: ${percent}%"></div>
+                    </div>
+                    <span class="graph-value">${item.count}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Context-aware colors for bars
+     */
+    function getContextClass(name, defaultClass) {
+        if (name.includes('DIAMOND')) return 'bar-diamond';
+        if (name.includes('GOLD')) return 'bar-gold';
+        if (name.includes('IRON')) return 'bar-iron';
+        if (name.includes('COAL')) return 'bar-coal';
+        if (name.includes('EMERALD')) return 'bar-emerald';
+        if (name.includes('REDSTONE')) return 'bar-redstone';
+        if (name.includes('LAPIS')) return 'bar-lapis';
+        if (name.includes('ANCIENT_DEBRIS')) return 'bar-ancient';
+        return defaultClass;
     }
 
     // Event Listeners
     closePanelBtn.addEventListener('click', () => {
         detailsPanel.classList.remove('open');
+        selectedPlayer = null;
     });
 
     searchInput.addEventListener('input', renderPlayers);
