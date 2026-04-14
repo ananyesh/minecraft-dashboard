@@ -76,8 +76,20 @@
 
             <section class="viewport">
                 <div class="section-title">
-                    <h2>Players</h2>
-                    <p>Click a player to view detailed statistics</p>
+                    <div class="title-left">
+                        <h2>Leaderboard</h2>
+                        <p>Real-time player rankings</p>
+                    </div>
+                    <div class="sort-controls">
+                        <label for="sort-by">Sort by:</label>
+                        <select id="sort-by">
+                            <option value="none">Default</option>
+                            <option value="playtime">Playtime</option>
+                            <option value="kills">Kills</option>
+                            <option value="deaths">Deaths</option>
+                            <option value="mined">Blocks Mined</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="player-grid" id="player-grid">
                     <!-- Players will be injected here -->
@@ -136,6 +148,13 @@
                         <div class="stat-card">
                             <span class="stat-label">Stone Mined</span>
                             <span class="stat-value" id="stat-stone">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="graph-section">
+                        <h4>Mined blocks breakdown</h4>
+                        <div class="mining-graph" id="mining-graph">
+                            <!-- Graph bars will be injected here -->
                         </div>
                     </div>
                 </div>
