@@ -154,6 +154,22 @@ body {
 .stat-item .val { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 14px; color: var(--text-main); }
 .stat-item .lab { font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
 
+/* ELO Rank Badge on player cards */
+.p-rank-badge {
+    display: inline-block; margin-top: 10px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px; border: 1px solid;
+    letter-spacing: 0.5px;
+}
+
+/* ELO Rank Pill on leaderboard rows */
+.elo-rank-pill {
+    display: inline-block; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 2px 8px; border-radius: 20px; border: 1px solid;
+    white-space: nowrap;
+}
+
 @keyframes pulse-green {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.5); opacity: 0.5; }
