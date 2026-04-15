@@ -121,24 +121,27 @@ public class WebStats extends JavaPlugin implements Listener {
     private String getSkinName(Player player) {
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("SkinsRestorer")) {
-                // Get the SkinsRestorer API instance via reflection
                 Object api = Class.forName("net.skinsrestorer.api.SkinsRestorerProvider")
                         .getMethod("get").invoke(null);
                 Object playerStorage = api.getClass().getMethod("getPlayerStorage").invoke(api);
-
-                // getSkinIdOfPlayer returns Optional<String> in SR 15.x
                 Object optionalSkinId = playerStorage.getClass()
                         .getMethod("getSkinIdOfPlayer", java.util.UUID.class)
                         .invoke(playerStorage, player.getUniqueId());
 
-                // Properly unwrap the Optional
                 boolean isPresent = (boolean) optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
                 if (isPresent) {
                     String skinId = (String) optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
-                    if (skinId != null && !skinId.isEmpty()) return skinId;
+                    if (skinId != null && !skinId.isEmpty()) {
+                        getLogger().info("[WebStats Skin] " + player.getName() + " -> SR skin: '" + skinId + "'");
+                        return skinId;
+                    }
+                } else {
+                    getLogger().info("[WebStats Skin] " + player.getName() + " -> No SR skin set, using player name.");
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            getLogger().warning("[WebStats Skin] SkinsRestorer API error for " + player.getName() + ": " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
         return player.getName();
     }
 
