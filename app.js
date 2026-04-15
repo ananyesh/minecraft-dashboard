@@ -371,11 +371,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isNaN(target) || typeof Odometer === 'undefined') return;
             const isDecimal = el.dataset.count.includes('.');
 
-            // Get previous value from cache (or use target so no animation on first open)
+            // Get previous value from cache (first open = no animation, just show value)
             const prevVal = (key && statCache[key] !== undefined) ? statCache[key] : target;
 
-            // Initialize odometer at previous value
-            el.textContent = prevVal;
             const odo = new Odometer({
                 el: el,
                 value: prevVal,
@@ -384,10 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 duration: 800
             });
 
-            // Store new value in cache
             if (key) statCache[key] = target;
-
-            // Animate to new value only if it changed
             if (prevVal !== target) setTimeout(() => odo.update(target), 50);
         });
     }
