@@ -261,8 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (currentSort === 'mined') { displayVal = stats.total_mined || 0; displayLabel = 'Mined'; }
 
             return `
-                <div class="leader-row rank-pos-${rank}" onclick="showPlayerDetails('${player.uuid}')">
-                    <div class="rank-number">${rank}</div>
+                <div class="leader-row rank-pos-${rank}" onclick="showPlayerDetails('${player.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
+                    <div class="rank-number" style="color:${eloRank.color}">${rank}</div>
                     <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/42" alt="${player.username}"></div>
                     <div class="leader-info">
                         <div style="display:flex;align-items:center;gap:8px">
@@ -334,21 +334,44 @@ document.addEventListener('DOMContentLoaded', () => {
         const kd = (kills / Math.max(1, deaths)).toFixed(2);
         const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
 
+        const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
+
         let gridHtml = `
             <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
-            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value">${deaths}</span></div>
-            <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value">${kills}</span></div>
-            <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value">${kd}</span></div>
-            <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value">${mined}</span></div>
-            <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value">${placed}</span></div>
-            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value">${mobs}</span></div>`;
+            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}">${deaths}</span></div>
+            <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}">${kills}</span></div>
+            <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value" data-count="${kd}" data-suffix="">${kd}</span></div>
+            <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value" data-count="${mined}">${mined}</span></div>
+            <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value" data-count="${placed}">${placed}</span></div>
+            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}">${mobs}</span></div>
+            <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}">${damage}</span></div>`;
 
         const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
         Object.entries(custom).forEach(([key, val]) => { if (!featured.includes(key)) gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`; });
         container.innerHTML = gridHtml;
+        // Animate all numeric stat values counting up from 0
+        animateCounters(container);
 
         renderStatChart(document.getElementById('mining-graph'), stats['minecraft:mined'] || {}, 'bar-stone');
         renderStatChart(document.getElementById('combat-graph'), stats['minecraft:killed'] || {}, 'bar-emerald');
+    }
+
+    function animateCounters(container) {
+        container.querySelectorAll('.stat-value[data-count]').forEach(el => {
+            const target = parseFloat(el.dataset.count);
+            if (isNaN(target)) return;
+            const suffix = el.dataset.suffix || '';
+            const isDecimal = el.dataset.count.includes('.');
+            const duration = 900;
+            const startTime = performance.now();
+            function tick(now) {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = (isDecimal ? (target * eased).toFixed(2) : Math.floor(target * eased)) + suffix;
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        });
     }
 
     function renderStatChart(container, dataMap, defaultClass) {
