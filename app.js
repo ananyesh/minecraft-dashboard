@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTab = 'players';
     let tpsOdo = null;
     let msptOdo = null;
+    let playersOdo = null;
 
     // Configuration
     const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
@@ -122,6 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Color coding
         if (tpsEl) tpsEl.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
         if (msptEl) msptEl.style.color = mspt < 25 ? 'var(--online)' : (mspt < 45 ? 'var(--accent)' : 'var(--offline)');
+
+        // Players Online card
+        const playersEl = document.getElementById('h-players');
+        const maxPlayersEl = document.getElementById('h-max-players');
+        const onlineCount = serverHealth.players_online || players.filter(p => p.online).length;
+        if (typeof Odometer !== 'undefined' && playersEl) {
+            if (!playersOdo) {
+                playersOdo = new Odometer({ el: playersEl, value: 0, format: 'd', theme: 'minimal', duration: 800 });
+            }
+            playersOdo.update(onlineCount);
+        } else if (playersEl) {
+            playersEl.textContent = onlineCount;
+        }
+        if (maxPlayersEl) maxPlayersEl.textContent = serverHealth.players_max || 20;
     }
 
     function renderTripleGraphs() {
