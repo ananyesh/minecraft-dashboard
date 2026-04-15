@@ -497,6 +497,21 @@ document.addEventListener('DOMContentLoaded', () => {
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
 
+    // Search: re-render instantly as you type
+    searchInput.addEventListener('input', () => {
+        if (currentTab === 'players') renderPlayersGrid();
+        else if (currentTab === 'leaderboard') renderLeaderboard();
+    });
+
+    // FAQ accordion: click question to toggle answer
+    document.addEventListener('click', (e) => {
+        const card = e.target.closest('.faq-card');
+        if (!card) return;
+        const isOpen = card.classList.contains('faq-open');
+        document.querySelectorAll('.faq-card.faq-open').forEach(c => c.classList.remove('faq-open'));
+        if (!isOpen) card.classList.add('faq-open');
+    });
+
     updateAllData();
     setInterval(updateAllData, 30000);
 });
