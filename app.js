@@ -210,7 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let displayVal = 0, displayLabel = 'Mined';
             if (currentSort === 'kills') { displayVal = custom['PLAYER_KILLS'] || 0; displayLabel = 'Kills'; }
             else if (currentSort === 'playtime') { displayVal = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h'; displayLabel = 'Playtime'; }
-            else { displayVal = stats.total_mined || 0; displayLabel = 'Mined'; }
+            else if (currentSort === 'mined') { displayVal = stats.total_mined || 0; displayLabel = 'Mined'; }
+            else { displayVal = calculatePowerScore(player); displayLabel = 'Power Score'; }
 
             return `
                 <div class="leader-row rank-${rank}" onclick="showPlayerDetails('${player.uuid}')">
@@ -231,12 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
     }
 
+    function calculatePowerScore(player) {
+        const custom = player.stats?.['minecraft:custom'] || {};
+        const kills = custom['PLAYER_KILLS'] || 0;
+        const hours = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
+        const mined = player.stats?.total_mined || 0;
+        return (kills * 50) + (hours * 10) + Math.floor(mined / 100);
+    }
+
     function getSortedPlayers() {
         let sorted = [...players];
         if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
         else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
         else if (currentSort === 'mined') sorted.sort((a, b) => (b.stats?.total_mined || 0) - (a.stats?.total_mined || 0));
-        else sorted.sort((a, b) => (b.online === a.online) ? a.username.localeCompare(b.username) : (b.online ? 1 : -1));
+        else if (currentSort === 'power' || currentSort === 'none') sorted.sort((a, b) => calculatePowerScore(b) - calculatePowerScore(a));
         return sorted;
     }
 
@@ -304,19 +313,22 @@ document.addEventListener('DOMContentLoaded', () => {
         playersSection.style.display = 'none';
         healthSection.style.display = 'none';
 
+        const sortControls = document.querySelector('.sort-controls');
         currentTab = tab;
         if (tab === 'players') { 
             navPlayers.classList.add('active'); 
-            playersSection.style.display = 'block'; 
-            playerGrid.className = 'players-grid';
+            playersSection.style.display = 'block';
+            playerGrid.className = 'player-grid';
+            if (sortControls) sortControls.classList.add('hide');
             currentSort = 'none';
             sortBySelect.value = 'none';
         } else if (tab === 'leaderboard') { 
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
-            playerGrid.className = 'leaderboard-container';
-            currentSort = 'mined'; 
-            sortBySelect.value = 'mined'; 
+            playerGrid.className = 'player-grid';
+            if (sortControls) sortControls.classList.remove('hide');
+            currentSort = 'none';
+            sortBySelect.value = 'none'; 
         } else if (tab === 'health') { 
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
