@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let tpsOdo = null;
     let msptOdo = null;
     let playersOdo = null;
+    const statCache = {}; // { uuid_statKey: lastValue } for odometer prev->new animation
 
     // Configuration
     const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
@@ -335,16 +336,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
 
         const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
+        const uuid = player.uuid;
 
         let gridHtml = `
             <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
-            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}">${deaths}</span></div>
-            <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}">${kills}</span></div>
-            <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value" data-count="${kd}" data-suffix="">${kd}</span></div>
-            <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value" data-count="${mined}">${mined}</span></div>
-            <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value" data-count="${placed}">${placed}</span></div>
-            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}">${mobs}</span></div>
-            <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}">${damage}</span></div>`;
+            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
+            <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
+            <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value" data-count="${kd}" data-stat-key="${uuid}_kd">${kd}</span></div>
+            <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value" data-count="${mined}" data-stat-key="${uuid}_mined">${mined}</span></div>
+            <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value" data-count="${placed}" data-stat-key="${uuid}_placed">${placed}</span></div>
+            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}" data-stat-key="${uuid}_mobs">${mobs}</span></div>
+            <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}" data-stat-key="${uuid}_damage">${damage}</span></div>`;
 
         const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
         Object.entries(custom).forEach(([key, val]) => {
@@ -365,17 +367,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateCounters(container) {
         container.querySelectorAll('.stat-value[data-count]').forEach(el => {
             const target = parseFloat(el.dataset.count);
+            const key = el.dataset.statKey;
             if (isNaN(target) || typeof Odometer === 'undefined') return;
             const isDecimal = el.dataset.count.includes('.');
-            el.textContent = '0';
+
+            // Get previous value from cache (or use target so no animation on first open)
+            const prevVal = (key && statCache[key] !== undefined) ? statCache[key] : target;
+
+            // Initialize odometer at previous value
+            el.textContent = prevVal;
             const odo = new Odometer({
                 el: el,
-                value: 0,
+                value: prevVal,
                 format: isDecimal ? '(,ddd).dd' : '(,ddd)',
                 theme: 'minimal',
-                duration: 1000
+                duration: 800
             });
-            setTimeout(() => odo.update(target), 50);
+
+            // Store new value in cache
+            if (key) statCache[key] = target;
+
+            // Animate to new value only if it changed
+            if (prevVal !== target) setTimeout(() => odo.update(target), 50);
         });
     }
 
