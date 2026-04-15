@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPlayer = null;
     let currentSort = 'none';
     let currentTab = 'players';
+    let tpsOdo = null;
+    let msptOdo = null;
 
     // Configuration
     const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
@@ -96,10 +98,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderHealthStatus() {
         const tps = serverHealth.tps || 20;
         const mspt = serverHealth.mspt || 0;
-        hTPS.textContent = tps.toFixed(2);
-        hMSPT.textContent = mspt.toFixed(1) + 'ms';
-        hTPS.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
-        hMSPT.style.color = mspt < 25 ? 'var(--online)' : (mspt < 45 ? 'var(--accent)' : 'var(--offline)');
+
+        const tpsEl = document.getElementById('h-tps');
+        const msptEl = document.getElementById('h-mspt');
+
+        // Initialize Odometers on first render
+        if (typeof Odometer !== 'undefined') {
+            if (!tpsOdo && tpsEl) {
+                tpsOdo = new Odometer({ el: tpsEl, value: tps, format: 'd', theme: 'minimal', duration: 800 });
+            }
+            if (!msptOdo && msptEl) {
+                msptOdo = new Odometer({ el: msptEl, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
+            }
+            // Update values (animate)
+            if (tpsOdo) tpsOdo.update(Math.round(tps));
+            if (msptOdo) msptOdo.update(Math.round(mspt));
+        } else {
+            // Fallback if odometer.js didn't load
+            if (tpsEl) tpsEl.textContent = tps.toFixed(1);
+            if (msptEl) msptEl.textContent = Math.round(mspt);
+        }
+
+        // Color coding
+        if (tpsEl) tpsEl.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
+        if (msptEl) msptEl.style.color = mspt < 25 ? 'var(--online)' : (mspt < 45 ? 'var(--accent)' : 'var(--offline)');
     }
 
     function renderTripleGraphs() {
