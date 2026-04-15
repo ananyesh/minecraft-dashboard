@@ -239,8 +239,13 @@ body {
     color: inherit !important;
     line-height: 1 !important;
 }
-.odometer.odometer-theme-minimal .odometer-digit { background: transparent !important; border: none !important; }
-.odometer.odometer-theme-minimal .odometer-digit .odometer-digit-inner { overflow: hidden; }
+.odometer.odometer-theme-minimal .odometer-digit { background: transparent !important; border: none !important; color: inherit !important; }
+.odometer.odometer-theme-minimal .odometer-digit .odometer-digit-inner { overflow: hidden; color: inherit !important; }
+.odometer.odometer-theme-minimal .odometer-digit-spacer { color: inherit !important; }
+.odometer.odometer-theme-minimal .odometer-ribbon { color: inherit !important; }
+.odometer.odometer-theme-minimal .odometer-ribbon-inner { color: inherit !important; }
+.odometer.odometer-theme-minimal .odometer-value { color: inherit !important; }
+.odometer * { color: inherit !important; }
 
 /* Triple Chart Suite */
 .triple-chart-stack { display: flex; flex-direction: column; gap: 32px; margin-top: 40px; }
