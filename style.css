@@ -170,6 +170,23 @@ body {
     white-space: nowrap;
 }
 
+/* FAQ Section */
+.faq-list { display: flex; flex-direction: column; gap: 14px; max-width: 780px; }
+.faq-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 22px 26px;
+    transition: var(--transition); cursor: default;
+}
+.faq-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.faq-q {
+    font-size: 15px; font-weight: 800; color: var(--text-main);
+    margin-bottom: 10px; letter-spacing: 0.1px;
+}
+.faq-a {
+    font-size: 13px; color: var(--text-muted); line-height: 1.75;
+}
+.faq-a b { color: var(--text-main); }
+
 @keyframes pulse-green {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.5); opacity: 0.5; }
