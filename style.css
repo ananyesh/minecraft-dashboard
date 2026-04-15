@@ -107,17 +107,17 @@ body {
 .section-title p { color: var(--text-muted); }
 
 /* Player Cards */
-.player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+.player-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
 .player-card {
-    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px;
-    padding: 24px; text-align: center; cursor: pointer; transition: var(--transition);
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 16px; text-align: center; cursor: pointer; transition: var(--transition);
 }
 .player-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
 .player-card.offline-card { opacity: 0.4; }
 
-.p-avatar { width: 80px; height: 80px; margin: 0 auto 16px; border-radius: 16px; overflow: hidden; background: #000; }
+.p-avatar { width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #000; }
 .p-avatar img { width: 100%; height: 100%; }
-.p-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.p-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
 
 .p-status {
     display: inline-flex; align-items: center; gap: 8px;
@@ -321,3 +321,6 @@ body {
 }
 .leader-metric .m-val { display: block; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: var(--primary); }
 .leader-metric .m-lab { display: block; font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
+
+/* Utility */
+.hide { display: none !important; }
