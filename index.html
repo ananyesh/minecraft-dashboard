@@ -12,6 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Odometer.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/themes/odometer-theme-minimal.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/odometer.js/0.4.8/odometer.min.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -104,8 +107,19 @@
                     </div>
                     
                     <div class="health-grid">
-                        <div class="health-card"><span class="h-label">Engine TPS</span><span class="h-value" id="h-tps">20.0</span></div>
-                        <div class="health-card"><span class="h-label">Tick Lag</span><span class="h-value" id="h-mspt">0ms</span></div>
+                        <div class="health-card">
+                            <span class="h-label">Engine TPS</span>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-tps">20</span>
+                            </div>
+                        </div>
+                        <div class="health-card">
+                            <span class="h-label">Tick Lag</span>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-mspt">0</span>
+                                <span class="h-unit">ms</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Triple Metric Charts -->
