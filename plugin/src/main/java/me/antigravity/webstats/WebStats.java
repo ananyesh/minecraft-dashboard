@@ -93,22 +93,24 @@ public class WebStats extends JavaPlugin implements Listener {
 
     private void syncServerStats(boolean online) {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
-        long mspt = calculateMSPT();
-        String json = String.format("{\"tps\":%.2f, \"mspt\":%d, \"players_online\":%d, \"players_max\":%d, \"status\":\"%s\"}", 
+        double mspt = calculateMSPT();
+        String json = String.format("{\"tps\":%.2f, \"mspt\":%.1f, \"players_online\":%d, \"players_max\":%d, \"status\":\"%s\"}", 
                 currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers(), online ? "online" : "offline");
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
-    private long calculateMSPT() {
+    private double calculateMSPT() {
         try {
-            return (long) Bukkit.class.getMethod("getAverageTickTime").invoke(null);
+            // Paper/Spigot 1.21+ MSPT check
+            return (double) Bukkit.class.getMethod("getAverageTickTime").invoke(null);
         } catch (Exception e) {
-            return (long) (50.0 * (20.0 / Math.max(0.1, currentTps)));
+            // Fallback for non-Paper servers: Estimate based on current load (crude)
+            return (5.0 * (20.0 / Math.max(0.1, currentTps))); 
         }
     }
 
     private void recordAdvancedPulse() {
-        String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%d, \"ts\":%d}", 
+        String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%.1f, \"ts\":%d}", 
                 Bukkit.getOnlinePlayers().size(), currentTps, calculateMSPT(), System.currentTimeMillis() / 1000);
         pulseHistory.add(dp);
         if (pulseHistory.size() > 60) pulseHistory.removeFirst();
@@ -116,10 +118,6 @@ public class WebStats extends JavaPlugin implements Listener {
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
     }
 
-    /**
-     * SkinsRestorer Integration (Reflection-based)
-     * Detects if SkinsRestorer is present and fetches the skin value/name.
-     */
     private String getSkinName(Player player) {
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("SkinsRestorer")) {
@@ -129,7 +127,7 @@ public class WebStats extends JavaPlugin implements Listener {
                 if (skinId != null) return skinId.toString();
             }
         } catch (Exception ignored) {}
-        return player.getName(); // Fallback to username
+        return player.getName();
     }
 
     private void syncPlayer(Player player, boolean online) {
