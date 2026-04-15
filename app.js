@@ -36,38 +36,51 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function updateAllData() {
         try {
-            const [pRes, sRes, hRes] = await Promise.all([
+            const [pRes, sRes, hRes] = await Promise.allSettled([
                 fetch(baseFirebaseURL + 'players.json'),
                 fetch(baseFirebaseURL + 'server/health.json'),
                 fetch(baseFirebaseURL + 'server/history.json')
             ]);
 
-            const pData = await pRes.json();
-            const rawPlayers = pData ? Object.values(pData) : [];
+            // Handle Players
+            if (pRes.status === 'fulfilled') {
+                const pData = await pRes.value.json();
+                const rawPlayers = pData ? Object.values(pData).filter(p => p && p.username) : [];
+                
+                const deduped = {};
+                rawPlayers.forEach(p => {
+                    const name = p.username.toLowerCase();
+                    const existing = deduped[name];
+                    if (!existing) { deduped[name] = p; }
+                    else {
+                        const isNewActive = p.online && !existing.online;
+                        const hasMoreStats = (p.stats?.total_mined || 0) > (existing.stats?.total_mined || 0);
+                        if (isNewActive || (!existing.online && hasMoreStats)) { deduped[name] = p; }
+                    }
+                });
+                players = Object.values(deduped);
+            }
             
-            // Deduplicate by Name (Smart Merge)
-            const deduped = {};
-            rawPlayers.forEach(p => {
-                const name = p.username.toLowerCase();
-                const existing = deduped[name];
-                if (!existing) { deduped[name] = p; }
-                else {
-                    const isNewActive = p.online && !existing.online;
-                    const hasMoreStats = (p.stats?.total_mined || 0) > (existing.stats?.total_mined || 0);
-                    if (isNewActive || (!existing.online && hasMoreStats)) { deduped[name] = p; }
-                }
-            });
-            players = Object.values(deduped);
-            
-            const sData = await sRes.json();
-            if (sData) serverHealth = sData;
+            // Handle Server Health
+            if (sRes.status === 'fulfilled') {
+                try {
+                    const sData = await sRes.value.json();
+                    if (sData) serverHealth = sData;
+                } catch(e) {}
+            }
 
-            const hData = await hRes.json();
-            if (hData) playerHistory = Array.isArray(hData) ? hData : [];
+            // Handle History
+            if (hRes.status === 'fulfilled') {
+                try {
+                    const hData = await hRes.value.json();
+                    if (hData) playerHistory = Array.isArray(hData) ? hData : [];
+                } catch(e) {}
+            }
 
-            renderAll();
         } catch (e) {
             console.error('Quartz Dashboard Sync Error:', e);
+        } finally {
+            renderAll();
         }
     }
 
