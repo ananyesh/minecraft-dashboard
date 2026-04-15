@@ -145,6 +145,15 @@ body {
 }
 .p-status.offline .status-dot { background: var(--text-muted); opacity: 0.5; }
 
+/* Quick Stats on Cards */
+.p-quick-stats {
+    display: flex; justify-content: center; gap: 20px;
+    margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+.stat-item { display: flex; flex-direction: column; align-items: center; }
+.stat-item .val { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 14px; color: var(--text-main); }
+.stat-item .lab { font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
+
 @keyframes pulse-green {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.5); opacity: 0.5; }
