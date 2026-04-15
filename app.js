@@ -347,7 +347,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}">${damage}</span></div>`;
 
         const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
-        Object.entries(custom).forEach(([key, val]) => { if (!featured.includes(key)) gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`; });
+        Object.entries(custom).forEach(([key, val]) => {
+            if (!featured.includes(key)) {
+                const numVal = typeof val === 'number' ? val : parseFloat(val);
+                const hasCount = !isNaN(numVal) ? `data-count="${numVal}"` : '';
+                gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value" ${hasCount}>${!isNaN(numVal) ? numVal.toLocaleString() : val}</span></div>`;
+            }
+        });
         container.innerHTML = gridHtml;
         // Animate all numeric stat values counting up from 0
         animateCounters(container);
@@ -359,18 +365,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateCounters(container) {
         container.querySelectorAll('.stat-value[data-count]').forEach(el => {
             const target = parseFloat(el.dataset.count);
-            if (isNaN(target)) return;
-            const suffix = el.dataset.suffix || '';
+            if (isNaN(target) || typeof Odometer === 'undefined') return;
             const isDecimal = el.dataset.count.includes('.');
-            const duration = 900;
-            const startTime = performance.now();
-            function tick(now) {
-                const progress = Math.min((now - startTime) / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                el.textContent = (isDecimal ? (target * eased).toFixed(2) : Math.floor(target * eased)) + suffix;
-                if (progress < 1) requestAnimationFrame(tick);
-            }
-            requestAnimationFrame(tick);
+            el.textContent = '0';
+            const odo = new Odometer({
+                el: el,
+                value: 0,
+                format: isDecimal ? '(,ddd).dd' : '(,ddd)',
+                theme: 'minimal',
+                duration: 1000
+            });
+            setTimeout(() => odo.update(target), 50);
         });
     }
 
