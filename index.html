@@ -40,6 +40,10 @@
                     <i class="fa-solid fa-microchip"></i>
                     <span>Server Health</span>
                 </div>
+                <div class="nav-item" id="nav-faq">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <span>FAQ / Guide</span>
+                </div>
             </nav>
 
             <div class="server-status-card">
@@ -94,6 +98,61 @@
                     </div>
                     <div class="player-grid" id="player-grid">
                         <div class="loading-state"><div class="spinner"></div><p>Synchronizing...</p></div>
+                    </div>
+                </section>
+
+                <!-- FAQ Section -->
+                <section id="faq-section" style="display: none;">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <h2>FAQ &amp; Guide</h2>
+                            <p>Everything you need to know about the QuartzSMP dashboard.</p>
+                        </div>
+                    </div>
+                    <div class="faq-list">
+                        <div class="faq-card">
+                            <div class="faq-q">🗺️ What is this dashboard?</div>
+                            <div class="faq-a">This is the QuartzSMP live stats dashboard. It shows real-time player data, server health, and competitive rankings — all synced automatically from the Minecraft server every 30 seconds.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">👥 What does the Players tab show?</div>
+                            <div class="faq-a">The Players tab shows all registered SMP members as a grid of cards. Click any card to open a detailed stat panel showing their kills, deaths, K/D ratio, blocks mined, playtime, and more. Online players are highlighted.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">🏆 What is the Leaderboard?</div>
+                            <div class="faq-a">The Leaderboard ranks the top 25 players by ELO score by default. You can switch the sort to Playtime, Total Mined, or Kills using the dropdown. The top 3 players get Gold, Silver, and Bronze highlights.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">⚡ How is ELO calculated?</div>
+                            <div class="faq-a">ELO uses the chess formula with K=32. Your ELO = (Playtime Hours × 10) + (Kills × ELO gained) − (Deaths × ELO lost). Killing a higher-ELO player gives you MORE ELO. Losing to a lower-ELO player costs MORE ELO. Each kill and death is a zero-sum transfer — what you gain equals what they lose.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">🏅 What are the ELO Ranks?</div>
+                            <div class="faq-a">There are 6 ranks based on your ELO score:<br><br>
+                                🟫 <b>Dirt</b> — 0 to 99 ELO<br>
+                                ⚙️ <b>Iron</b> — 100 to 299 ELO<br>
+                                🥇 <b>Gold</b> — 300 to 699 ELO<br>
+                                💚 <b>Emerald</b> — 700 to 1,499 ELO<br>
+                                💎 <b>Diamond</b> — 1,500 to 2,999 ELO<br>
+                                🖤 <b>Netherite</b> — 3,000+ ELO
+                            </div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">💻 What is TPS?</div>
+                            <div class="faq-a">TPS stands for Ticks Per Second. Minecraft runs at 20 TPS normally. If TPS drops below 20, the server is struggling — things slow down, mobs lag, and the world feels sluggish. The TPS meter on the Server Health tab shows the live value.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">⏱️ What is MSPT?</div>
+                            <div class="faq-a">MSPT is Milliseconds Per Tick — how long it takes the server to process one game tick. The target is under 50ms (20 TPS). The color changes from green → yellow → orange → red as it gets worse. Above 50ms means the server is critically overloaded.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">🔄 How often does data update?</div>
+                            <div class="faq-a">Player stats are synced to the cloud every time a player joins or leaves, and automatically every 5 minutes while online. The dashboard refreshes every 30 seconds. You can also force a refresh using the ↺ button at the top right.</div>
+                        </div>
+                        <div class="faq-card">
+                            <div class="faq-q">🎨 Why does my skin not show?</div>
+                            <div class="faq-a">Skins are fetched from mc-heads.net using your SkinsRestorer skin name. If you set your skin using /skin set, it may take up to one relog to sync. If your skin still shows as Steve, ask an admin to check the server console for [WebStats Skin] logs.</div>
+                        </div>
                     </div>
                 </section>
 
@@ -207,6 +266,6 @@
     </div>
 
     <!-- Logic -->
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
