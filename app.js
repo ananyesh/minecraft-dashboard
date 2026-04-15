@@ -94,17 +94,19 @@ document.addEventListener('DOMContentLoaded', () => {
      * Rendering logic
      */
     function renderHealthStatus() {
-        hTPS.textContent = serverHealth.tps.toFixed(2);
-        hMSPT.textContent = serverHealth.mspt.toFixed(1) + 'ms';
-        hTPS.style.color = serverHealth.tps > 18 ? 'var(--online)' : (serverHealth.tps > 15 ? 'var(--accent)' : 'var(--offline)');
-        hMSPT.style.color = serverHealth.mspt < 25 ? 'var(--online)' : (serverHealth.mspt < 45 ? 'var(--accent)' : 'var(--offline)');
+        const tps = serverHealth.tps || 20;
+        const mspt = serverHealth.mspt || 0;
+        hTPS.textContent = tps.toFixed(2);
+        hMSPT.textContent = mspt.toFixed(1) + 'ms';
+        hTPS.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
+        hMSPT.style.color = mspt < 25 ? 'var(--online)' : (mspt < 45 ? 'var(--accent)' : 'var(--offline)');
     }
 
     function renderTripleGraphs() {
         if (!playerHistory || playerHistory.length < 2) return;
-        renderSingleChart('graph-players', 'p', Math.max(...playerHistory.map(d => d.p), 5), 'var(--player-color)', 'line-players');
+        renderSingleChart('graph-players', 'p', Math.max(...playerHistory.map(d => d.p || 0), 5), 'var(--player-color)', 'line-players');
         renderSingleChart('graph-tps', 't', 20, 'var(--tps-color)', 'line-tps');
-        renderSingleChart('graph-mspt', 'm', Math.max(...playerHistory.map(d => d.m), 60), 'var(--mspt-color)', 'line-mspt');
+        renderSingleChart('graph-mspt', 'm', Math.max(...playerHistory.map(d => d.m || 0), 60), 'var(--mspt-color)', 'line-mspt');
     }
 
     function renderSingleChart(svgId, key, maxVal, color, lineClass) {
@@ -306,11 +308,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tab === 'players') { 
             navPlayers.classList.add('active'); 
             playersSection.style.display = 'block'; 
+            playerGrid.className = 'players-grid';
             currentSort = 'none';
             sortBySelect.value = 'none';
         } else if (tab === 'leaderboard') { 
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
+            playerGrid.className = 'leaderboard-container';
             currentSort = 'mined'; 
             sortBySelect.value = 'mined'; 
         } else if (tab === 'health') { 
