@@ -185,11 +185,11 @@ body {
     justify-content: space-between; gap: 12px; user-select: none;
 }
 .faq-q::after {
-    content: '›'; font-size: 20px; color: var(--text-muted);
-    transition: transform 0.3s ease; flex-shrink: 0;
-    display: inline-block;
+    content: '+';
+    font-size: 22px; font-weight: 300; color: var(--text-muted);
+    flex-shrink: 0; line-height: 1;
 }
-.faq-card.faq-open .faq-q::after { transform: rotate(90deg); color: var(--text-main); }
+.faq-card.faq-open .faq-q::after { content: '\00D7'; color: var(--text-main); font-size: 24px; }
 .faq-a {
     font-size: 13px; color: var(--text-muted); line-height: 1.8;
     max-height: 0; overflow: hidden;
