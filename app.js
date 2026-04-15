@@ -120,14 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (msptEl) msptEl.textContent = Math.round(mspt);
         }
 
-        // Color coding
+        // Color coding - TPS
         if (tpsEl) tpsEl.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
-        if (msptEl) msptEl.style.color = mspt < 25 ? 'var(--online)' : (mspt < 45 ? 'var(--accent)' : 'var(--offline)');
+        // Color coding - MSPT (4-tier traffic light)
+        if (msptEl) {
+            if (mspt > 50)       msptEl.style.color = '#ef4444'; // Red
+            else if (mspt > 37.5) msptEl.style.color = '#f97316'; // Orange 
+            else if (mspt > 25)   msptEl.style.color = '#eab308'; // Yellow
+            else if (mspt > 12.5) msptEl.style.color = '#fef08a'; // Light yellow
+            else                  msptEl.style.color = 'var(--online)'; // Green
+        }
 
         // Players Online card
         const playersEl = document.getElementById('h-players');
-        const maxPlayersEl = document.getElementById('h-max-players');
-        const onlineCount = serverHealth.players_online || players.filter(p => p.online).length;
+        const onlineCount = players.filter(p => p.online).length;
         if (typeof Odometer !== 'undefined' && playersEl) {
             if (!playersOdo) {
                 playersOdo = new Odometer({ el: playersEl, value: 0, format: 'd', theme: 'minimal', duration: 800 });
@@ -136,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (playersEl) {
             playersEl.textContent = onlineCount;
         }
-        if (maxPlayersEl) maxPlayersEl.textContent = serverHealth.players_max || 20;
     }
 
     function renderTripleGraphs() {
