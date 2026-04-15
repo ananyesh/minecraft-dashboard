@@ -121,10 +121,22 @@ public class WebStats extends JavaPlugin implements Listener {
     private String getSkinName(Player player) {
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("SkinsRestorer")) {
-                Object api = Class.forName("net.skinsrestorer.api.SkinsRestorerProvider").getMethod("get").invoke(null);
+                // Get the SkinsRestorer API instance via reflection
+                Object api = Class.forName("net.skinsrestorer.api.SkinsRestorerProvider")
+                        .getMethod("get").invoke(null);
                 Object playerStorage = api.getClass().getMethod("getPlayerStorage").invoke(api);
-                Object skinId = playerStorage.getClass().getMethod("getSkinIdOfPlayer", java.util.UUID.class).invoke(playerStorage, player.getUniqueId());
-                if (skinId != null) return skinId.toString();
+
+                // getSkinIdOfPlayer returns Optional<String> in SR 15.x
+                Object optionalSkinId = playerStorage.getClass()
+                        .getMethod("getSkinIdOfPlayer", java.util.UUID.class)
+                        .invoke(playerStorage, player.getUniqueId());
+
+                // Properly unwrap the Optional
+                boolean isPresent = (boolean) optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
+                if (isPresent) {
+                    String skinId = (String) optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
+                    if (skinId != null && !skinId.isEmpty()) return skinId;
+                }
             }
         } catch (Exception ignored) {}
         return player.getName();
