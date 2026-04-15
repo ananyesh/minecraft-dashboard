@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let msptOdo = null;
     let playersOdo = null;
     const statCache = {}; // { uuid_statKey: lastValue } for odometer prev->new animation
+    let eloMap = {};      // { uuid: calculatedElo } — updated by recalculateAllElos()
 
     // Configuration
     const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
@@ -81,9 +82,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ─── ELO: Iterative multi-pass chess ELO ─────────────────────────────────
+    // Pass 1 seeds from playtime. Each iteration refines using previous ELOs
+    // so kill/death gains truly reflect PvP rating differences.
+    function recalculateAllElos() {
+        if (players.length === 0) return;
+        const K = 32;
+
+        // Seed pass: hours * 10
+        players.forEach(p => {
+            const c = p.stats?.['minecraft:custom'] || {};
+            const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
+            eloMap[p.uuid] = Math.max(1, h * 10);
+        });
+
+        // 5 convergence passes
+        for (let iter = 0; iter < 5; iter++) {
+            const next = {};
+            players.forEach(p => {
+                const c = p.stats?.['minecraft:custom'] || {};
+                const kb = p.stats?.['minecraft:killed_by'] || {};
+                const kills = c['PLAYER_KILLS'] || 0;
+                const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
+                const pvpDeaths = kb['minecraft:player'] || kb['player'] || 0;
+
+                const myElo = eloMap[p.uuid] || 1;
+                const opponents = players.filter(op => op.uuid !== p.uuid);
+                const avgOppElo = opponents.length > 0
+                    ? opponents.reduce((s, op) => s + (eloMap[op.uuid] || 1), 0) / opponents.length
+                    : 100;
+
+                // Expected score probability (chess formula)
+                const expected = 1 / (1 + Math.pow(10, (avgOppElo - myElo) / 400));
+                // Zero-sum: eloPerKill + eloPerDeath = K (conservation)
+                const eloPerKill  = K * (1 - expected);
+                const eloPerDeath = K * expected;
+
+                next[p.uuid] = Math.max(0, Math.round(
+                    (h * 10) + (kills * eloPerKill) - (pvpDeaths * eloPerDeath)
+                ));
+            });
+            eloMap = next;
+        }
+    }
+
     function renderAll() {
+        recalculateAllElos();
         if (currentTab === 'players') renderPlayersGrid();
         else if (currentTab === 'leaderboard') renderLeaderboard();
+        else if (currentTab === 'faq') renderFaq();
         
         renderHealthStatus();
         renderTripleGraphs();
@@ -284,12 +331,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateElo(player) {
-        const custom = player.stats?.['minecraft:custom'] || {};
-        const killedBy = player.stats?.['minecraft:killed_by'] || {};
-        const kills = custom['PLAYER_KILLS'] || 0;
-        const hours = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-        const pvpDeaths = killedBy['minecraft:player'] || killedBy['player'] || 0;
-        return Math.max(0, (kills * 100) + (hours * 25) - (pvpDeaths * 75));
+        return eloMap[player.uuid] ?? (() => {
+            const c = player.stats?.['minecraft:custom'] || {};
+            const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
+            return h * 10;
+        })();
     }
 
     function getRank(elo) {
@@ -352,8 +398,11 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.entries(custom).forEach(([key, val]) => {
             if (!featured.includes(key)) {
                 const numVal = typeof val === 'number' ? val : parseFloat(val);
-                const hasCount = !isNaN(numVal) ? `data-count="${numVal}"` : '';
-                gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value" ${hasCount}>${!isNaN(numVal) ? numVal.toLocaleString() : val}</span></div>`;
+                if (!isNaN(numVal)) {
+                    gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value" data-count="${numVal}" data-stat-key="${uuid}_${key}">${numVal}</span></div>`;
+                } else {
+                    gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`;
+                }
             }
         });
         container.innerHTML = gridHtml;
@@ -402,12 +451,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function formatName(raw) { return raw.toLowerCase().replace(/minecraft:/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
     function getContextClass(n, d) { return n.includes('DIAMOND') ? 'bar-diamond' : (n.includes('GOLD') ? 'bar-gold' : (n.includes('IRON') ? 'bar-iron' : d)); }
 
+    function renderFaq() {} // FAQ is static HTML, no JS rendering needed
+
     function switchTab(tab) {
         navPlayers.classList.remove('active');
         navLeaderboards.classList.remove('active');
         navHealth.classList.remove('active');
+        document.getElementById('nav-faq').classList.remove('active');
         playersSection.style.display = 'none';
         healthSection.style.display = 'none';
+        document.getElementById('faq-section').style.display = 'none';
 
         const sortControls = document.querySelector('.sort-controls');
         currentTab = tab;
@@ -428,7 +481,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'health') { 
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
-            setTimeout(renderTripleGraphs, 100); 
+            setTimeout(renderTripleGraphs, 100);
+        } else if (tab === 'faq') {
+            document.getElementById('nav-faq').classList.add('active');
+            document.getElementById('faq-section').style.display = 'block';
         }
         renderAll();
     }
@@ -436,6 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     navPlayers.addEventListener('click', () => switchTab('players'));
     navLeaderboards.addEventListener('click', () => switchTab('leaderboard'));
     navHealth.addEventListener('click', () => switchTab('health'));
+    document.getElementById('nav-faq').addEventListener('click', () => switchTab('faq'));
     closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
