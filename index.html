@@ -98,25 +98,59 @@
                 <section id="health-section" style="display: none;">
                     <div class="section-title">
                         <div class="title-left">
-                            <h2>Health Analytics</h2>
-                            <p>Cluster stability and performance metrics.</p>
+                            <h2>Health Performance Analytics</h2>
+                            <p>60-minute high-fidelity timeline tracking for server cluster.</p>
                         </div>
                     </div>
+                    
                     <div class="health-grid">
                         <div class="health-card"><span class="h-label">Engine TPS</span><span class="h-value" id="h-tps">20.0</span></div>
                         <div class="health-card"><span class="h-label">Tick Lag</span><span class="h-value" id="h-mspt">0ms</span></div>
                     </div>
-                    <div class="advanced-graph-card">
-                        <div class="graph-header">
-                            <h3>Performance History</h3>
-                            <div class="graph-legend">
-                                <span class="leg-item"><i class="dot p-dot"></i> Players</span>
-                                <span class="leg-item"><i class="dot t-dot"></i> TPS</span>
+
+                    <!-- Triple Metric Charts -->
+                    <div class="triple-chart-stack">
+                        <!-- Chart 1: Players -->
+                        <div class="chart-container-premium">
+                            <div class="chart-header">
+                                <span class="chart-title"><i class="fa-solid fa-users"></i> Online Players / 60m</span>
+                                <span class="axis-y-title">Players</span>
+                            </div>
+                            <div class="chart-body" id="wrapper-players">
+                                <svg id="graph-players" width="100%" height="160" preserveAspectRatio="none"></svg>
+                                <div class="chart-tooltip" id="tooltip-players"></div>
                             </div>
                         </div>
-                        <div class="graph-wrapper" id="graph-wrapper">
-                            <svg id="history-graph" width="100%" height="200" preserveAspectRatio="none"></svg>
-                            <div id="graph-tooltip" class="graph-tooltip"></div>
+
+                        <!-- Chart 2: TPS -->
+                        <div class="chart-container-premium">
+                            <div class="chart-header">
+                                <span class="chart-title" style="color:var(--tps-color)"><i class="fa-solid fa-gauge-high"></i> Engine Speed (TPS)</span>
+                                <span class="axis-y-title">Ticks/Sec</span>
+                            </div>
+                            <div class="chart-body" id="wrapper-tps">
+                                <svg id="graph-tps" width="100%" height="160" preserveAspectRatio="none"></svg>
+                                <div class="chart-tooltip" id="tooltip-tps"></div>
+                            </div>
+                        </div>
+
+                        <!-- Chart 3: MSPT -->
+                        <div class="chart-container-premium">
+                            <div class="chart-header">
+                                <span class="chart-title" style="color:var(--mspt-color)"><i class="fa-solid fa-bolt"></i> Tick Duration (MSPT)</span>
+                                <span class="axis-y-title">Millis/Tick</span>
+                            </div>
+                            <div class="chart-body" id="wrapper-mspt">
+                                <svg id="graph-mspt" width="100%" height="160" preserveAspectRatio="none"></svg>
+                                <div class="chart-tooltip" id="tooltip-mspt"></div>
+                            </div>
+                        </div>
+
+                        <!-- Shared Time Axis -->
+                        <div class="chart-footer-time">
+                            <span>60 Minutes Ago</span>
+                            <span class="axis-x-label">History Timeline</span>
+                            <span>Live Now</span>
                         </div>
                     </div>
                 </section>
