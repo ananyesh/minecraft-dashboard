@@ -230,6 +230,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="stat-item"><span class="val">${m1Val}</span><span class="lab">${m1Label}</span></div>
                         <div class="stat-item"><span class="val">${m2Val}</span><span class="lab">${m2Label}</span></div>
                     </div>
+                    <div class="p-rank-badge" style="color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
+                        ${getRank(calculateElo(player)).icon} ${getRank(calculateElo(player)).name}
+                    </div>
                 </div>`;
         }).join('');
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
@@ -249,22 +252,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const custom = stats['minecraft:custom'] || {};
             const skinIdentity = player.skin || player.username;
             
-            let displayVal = 0, displayLabel = 'Mined';
+            const elo = calculateElo(player);
+            const eloRank = getRank(elo);
+
+            let displayVal = elo, displayLabel = 'ELO';
             if (currentSort === 'kills') { displayVal = custom['PLAYER_KILLS'] || 0; displayLabel = 'Kills'; }
             else if (currentSort === 'playtime') { displayVal = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h'; displayLabel = 'Playtime'; }
             else if (currentSort === 'mined') { displayVal = stats.total_mined || 0; displayLabel = 'Mined'; }
-            else { displayVal = calculatePowerScore(player); displayLabel = 'Power Score'; }
 
             return `
-                <div class="leader-row rank-${rank}" onclick="showPlayerDetails('${player.uuid}')">
+                <div class="leader-row rank-pos-${rank}" onclick="showPlayerDetails('${player.uuid}')">
                     <div class="rank-number">${rank}</div>
                     <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/42" alt="${player.username}"></div>
                     <div class="leader-info">
-                        <span class="leader-name">${player.username}</span>
-                        <span class="leader-status">${player.online ? 'Active' : 'Offline'}</span>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <span class="leader-name">${player.username}</span>
+                            <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
+                        </div>
+                        <span class="leader-status">${player.online ? '● Active' : '○ Offline'}</span>
                     </div>
                     <div class="leader-metric">
-                        <span class="m-val">${displayVal}</span>
+                        <span class="m-val" style="color:${currentSort === 'none' ? eloRank.color : 'var(--primary)'}">${displayVal}</span>
                         <span class="m-lab">${displayLabel}</span>
                     </div>
                 </div>`;
@@ -274,12 +282,22 @@ document.addEventListener('DOMContentLoaded', () => {
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
     }
 
-    function calculatePowerScore(player) {
+    function calculateElo(player) {
         const custom = player.stats?.['minecraft:custom'] || {};
+        const killedBy = player.stats?.['minecraft:killed_by'] || {};
         const kills = custom['PLAYER_KILLS'] || 0;
         const hours = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-        const mined = player.stats?.total_mined || 0;
-        return (kills * 50) + (hours * 10) + Math.floor(mined / 100);
+        const pvpDeaths = killedBy['minecraft:player'] || killedBy['player'] || 0;
+        return Math.max(0, (kills * 100) + (hours * 25) - (pvpDeaths * 75));
+    }
+
+    function getRank(elo) {
+        if (elo >= 3000) return { name: 'Netherite', color: '#9D84CD', icon: '🖤' };
+        if (elo >= 1500) return { name: 'Diamond',   color: '#7BFCFF', icon: '💎' };
+        if (elo >= 700)  return { name: 'Emerald',   color: '#44E880', icon: '💚' };
+        if (elo >= 300)  return { name: 'Gold',      color: '#FFD700', icon: '🥇' };
+        if (elo >= 100)  return { name: 'Iron',      color: '#C8C8C8', icon: '⚙️' };
+        return              { name: 'Dirt',       color: '#A0714A', icon: '🟫' };
     }
 
     function getSortedPlayers() {
@@ -287,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
         else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
         else if (currentSort === 'mined') sorted.sort((a, b) => (b.stats?.total_mined || 0) - (a.stats?.total_mined || 0));
-        else if (currentSort === 'power' || currentSort === 'none') sorted.sort((a, b) => calculatePowerScore(b) - calculatePowerScore(a));
+        else sorted.sort((a, b) => calculateElo(b) - calculateElo(a));
         return sorted;
     }
 
