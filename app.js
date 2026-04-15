@@ -124,11 +124,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tpsEl) tpsEl.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
         // Color coding - MSPT (4-tier traffic light)
         if (msptEl) {
-            if (mspt > 50)       msptEl.style.color = '#ef4444'; // Red
+            if (mspt > 50)        msptEl.style.color = '#ef4444'; // Red
             else if (mspt > 37.5) msptEl.style.color = '#f97316'; // Orange 
             else if (mspt > 25)   msptEl.style.color = '#eab308'; // Yellow
             else if (mspt > 12.5) msptEl.style.color = '#fef08a'; // Light yellow
-            else                  msptEl.style.color = 'var(--online)'; // Green
+            else                  msptEl.style.color = '#22c55e'; // Bright green
         }
 
         // Players Online card
