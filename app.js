@@ -100,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function renderHealthStatus() {
         hTPS.textContent = serverHealth.tps.toFixed(2);
-        hMSPT.textContent = serverHealth.mspt + 'ms';
+        hMSPT.textContent = serverHealth.mspt.toFixed(1) + 'ms';
         hTPS.style.color = serverHealth.tps > 18 ? 'var(--online)' : (serverHealth.tps > 15 ? 'var(--accent)' : 'var(--offline)');
-        hMSPT.style.color = serverHealth.mspt < 40 ? 'var(--online)' : (serverHealth.mspt < 50 ? 'var(--accent)' : 'var(--offline)');
+        hMSPT.style.color = serverHealth.mspt < 25 ? 'var(--online)' : (serverHealth.mspt < 45 ? 'var(--accent)' : 'var(--offline)');
     }
 
     function renderTripleGraphs() {
