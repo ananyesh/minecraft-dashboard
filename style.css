@@ -355,11 +355,13 @@ body {
 .player-card { animation: fadeIn 0.4s ease forwards; }
 
 /* Leaderboard Ranked List View */
-.leaderboard-list { display: flex; flex-direction: column; gap: 12px; }
+.leaderboard-mode { display: block; width: 100%; max-width: 900px; }
+.leaderboard-list { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .leader-row {
     background: var(--card-bg); border: 1px solid var(--card-border);
     border-radius: 16px; padding: 16px 24px; display: flex; align-items: center;
     gap: 20px; cursor: pointer; transition: var(--transition);
+    width: 100%;
 }
 .leader-row:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); transform: translateX(5px); }
 
@@ -374,8 +376,13 @@ body {
 .leader-avatar { width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: #000; }
 .leader-avatar img { width: 100%; height: 100%; }
 
-.leader-info { flex: 1; display: flex; flex-direction: column; }
-.leader-name { font-weight: 700; font-size: 16px; color: var(--text-main); }
+.leader-info { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.leader-name-wrapper { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.leader-name { 
+    font-weight: 700; font-size: 16px; color: var(--text-main); 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 180px;
+}
 .leader-status { font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; }
 
 .leader-metric {
