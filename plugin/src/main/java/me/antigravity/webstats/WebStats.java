@@ -128,19 +128,39 @@ public class WebStats extends JavaPlugin implements Listener {
                         .getMethod("getSkinIdOfPlayer", java.util.UUID.class)
                         .invoke(playerStorage, player.getUniqueId());
 
-                boolean isPresent = (boolean) optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
-                if (isPresent) {
-                    String skinId = (String) optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
-                    if (skinId != null && !skinId.isEmpty()) {
-                        getLogger().info("[WebStats Skin] " + player.getName() + " -> SR skin: '" + skinId + "'");
-                        return skinId;
+                if (optionalSkinId == null) {
+                    return player.getName();
+                }
+
+                // Handle Optional using reflection
+                try {
+                    boolean isPresent = false;
+                    Object isPresentResult = optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
+                    if (isPresentResult instanceof Boolean) {
+                        isPresent = (Boolean) isPresentResult;
                     }
-                } else {
-                    getLogger().info("[WebStats Skin] " + player.getName() + " -> No SR skin set, using player name.");
+
+                    if (isPresent) {
+                        Object skinIdObj = optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
+                        if (skinIdObj != null) {
+                            String skinId = skinIdObj.toString();
+                            if (!skinId.isEmpty()) {
+                                // getLogger().info("[WebStats Skin] " + player.getName() + " -> SR skin: '" + skinId + "'");
+                                return skinId;
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // Fallback if not an Optional or reflection fails
+                    String result = optionalSkinId.toString();
+                    if (result != null && !result.equals("Optional.empty") && !result.isEmpty()) {
+                        return result;
+                    }
                 }
             }
         } catch (Exception e) {
-            getLogger().warning("[WebStats Skin] SkinsRestorer API error for " + player.getName() + ": " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            String msg = (e.getMessage() != null) ? e.getMessage() : "No message";
+            getLogger().warning("[WebStats Skin] SkinsRestorer API error for " + player.getName() + ": " + e.getClass().getSimpleName() + " (" + msg + ")");
         }
         return player.getName();
     }
