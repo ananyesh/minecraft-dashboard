@@ -83,7 +83,16 @@ public class WebStats extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        syncPlayer(event.getPlayer(), true);
+        Player player = event.getPlayer();
+        // Delay sync by 3s to let SkinsRestorer finish applying the skin
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (player.isOnline()) {
+                    syncPlayer(player, true);
+                }
+            }
+        }.runTaskLaterAsynchronously(this, 60L);
     }
 
     @EventHandler
