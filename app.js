@@ -313,8 +313,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="rank-number" style="color:${eloRank.color}">${rank}</div>
                     <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/42" alt="${player.username}"></div>
                     <div class="leader-info">
-                        <div style="display:flex;align-items:center;gap:8px">
-                            <span class="leader-name">${player.username}</span>
+                        <div class="leader-name-wrapper">
+                            <span class="leader-name" title="${player.username}">${player.username}</span>
                             <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                         </div>
                         <span class="leader-status">${player.online ? '● Active' : '○ Offline'}</span>
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'leaderboard') { 
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
-            playerGrid.className = 'player-grid';
+            playerGrid.className = 'leaderboard-mode';
             if (sortControls) sortControls.classList.remove('hide');
             currentSort = 'none';
             sortBySelect.value = 'none'; 
