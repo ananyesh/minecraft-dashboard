@@ -83,16 +83,7 @@ public class WebStats extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        // Delay sync by 3s to let SkinsRestorer finish applying the skin
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (player.isOnline()) {
-                    syncPlayer(player, true);
-                }
-            }
-        }.runTaskLaterAsynchronously(this, 60L);
+        syncPlayer(event.getPlayer(), true);
     }
 
     @EventHandler
@@ -127,53 +118,11 @@ public class WebStats extends JavaPlugin implements Listener {
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
     }
 
-    private String getSkinName(Player player) {
-        try {
-            if (Bukkit.getPluginManager().isPluginEnabled("SkinsRestorer")) {
-                Object api = Class.forName("net.skinsrestorer.api.SkinsRestorerProvider")
-                        .getMethod("get").invoke(null);
-                Object playerStorage = api.getClass().getMethod("getPlayerStorage").invoke(api);
-                Object optionalSkinId = playerStorage.getClass()
-                        .getMethod("getSkinIdOfPlayer", java.util.UUID.class)
-                        .invoke(playerStorage, player.getUniqueId());
-
-                if (optionalSkinId == null) return player.getName();
-
-                // Handle Optional using reflection
-                try {
-                    boolean isPresent = false;
-                    Object isPresentResult = optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
-                    if (isPresentResult instanceof Boolean) isPresent = (Boolean) isPresentResult;
-
-                    if (isPresent) {
-                        Object skinIdObj = optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
-                        if (skinIdObj != null) {
-                            String skinId = skinIdObj.toString();
-                            if (!skinId.isEmpty()) {
-                                if (!skinId.equalsIgnoreCase(player.getName())) {
-                                    getLogger().info("[WebStats Skin] " + player.getName() + " using custom skin: " + skinId);
-                                }
-                                return skinId;
-                            }
-                        }
-                    }
-                } catch (Exception ignored) {
-                    String result = optionalSkinId.toString();
-                    if (result != null && !result.equals("Optional.empty") && !result.isEmpty()) return result;
-                }
-            }
-        } catch (Exception e) {
-            String msg = (e.getMessage() != null) ? e.getMessage() : "No message";
-            getLogger().warning("[WebStats Skin] SkinsRestorer API error for " + player.getName() + ": " + e.getClass().getSimpleName() + " (" + msg + ")");
-        }
-        return player.getName();
-    }
-
     private void syncPlayer(Player player, boolean online) {
         if (databaseURL.isEmpty() || databaseURL.contains("your-project")) return;
 
         String uuid = player.getUniqueId().toString();
-        String skin = getSkinName(player);
+        String skin = player.getName();
         
         int mined = 0;
         int placed = 0;
