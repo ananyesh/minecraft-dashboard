@@ -128,17 +128,13 @@ public class WebStats extends JavaPlugin implements Listener {
                         .getMethod("getSkinIdOfPlayer", java.util.UUID.class)
                         .invoke(playerStorage, player.getUniqueId());
 
-                if (optionalSkinId == null) {
-                    return player.getName();
-                }
+                if (optionalSkinId == null) return player.getName();
 
                 // Handle Optional using reflection
                 try {
                     boolean isPresent = false;
                     Object isPresentResult = optionalSkinId.getClass().getMethod("isPresent").invoke(optionalSkinId);
-                    if (isPresentResult instanceof Boolean) {
-                        isPresent = (Boolean) isPresentResult;
-                    }
+                    if (isPresentResult instanceof Boolean) isPresent = (Boolean) isPresentResult;
 
                     if (isPresent) {
                         Object skinIdObj = optionalSkinId.getClass().getMethod("get").invoke(optionalSkinId);
@@ -153,11 +149,8 @@ public class WebStats extends JavaPlugin implements Listener {
                         }
                     }
                 } catch (Exception ignored) {
-                    // Fallback if not an Optional or reflection fails
                     String result = optionalSkinId.toString();
-                    if (result != null && !result.equals("Optional.empty") && !result.isEmpty()) {
-                        return result;
-                    }
+                    if (result != null && !result.equals("Optional.empty") && !result.isEmpty()) return result;
                 }
             }
         } catch (Exception e) {
@@ -165,28 +158,6 @@ public class WebStats extends JavaPlugin implements Listener {
             getLogger().warning("[WebStats Skin] SkinsRestorer API error for " + player.getName() + ": " + e.getClass().getSimpleName() + " (" + msg + ")");
         }
         return player.getName();
-    }
-
-    // Dynamic listener for SkinsRestorer events to trigger instant web sync
-    @EventHandler
-    public void onSkinApply(org.bukkit.event.Event event) {
-        // SkinsRestorer v15 uses net.skinsrestorer.api.event.SkinApplyEvent
-        if (event.getClass().getName().endsWith("SkinApplyEvent")) {
-            try {
-                Object playerProperty = event.getClass().getMethod("getPlayerProperty").invoke(event);
-                Object playerObj = playerProperty.getClass().getMethod("getPlayer").invoke(playerProperty);
-                if (playerObj instanceof Player) {
-                    Player p = (Player) playerObj;
-                    // Wait 1s for SR to finalize DB write then sync
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            syncPlayer(p, true);
-                        }
-                    }.runTaskLaterAsynchronously(this, 20L);
-                }
-            } catch (Exception ignored) {}
-        }
     }
 
     private void syncPlayer(Player player, boolean online) {
