@@ -321,6 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="p-status ${player.online ? 'online' : 'offline'}">
                         <span class="status-dot"></span> ${player.online ? 'Active' : 'Offline'}
                     </div>
+                    <div class="p-energy-badge">
+                        <i class="fa-solid fa-bolt"></i> <span class="val">${player.energy || 0}</span> <span class="lab">PWR</span>
+                    </div>
                     <div class="p-quick-stats">
                         <div class="stat-item"><span class="val">${m1Val}</span><span class="lab">${m1Label}</span></div>
                         <div class="stat-item"><span class="val">${m2Val}</span><span class="lab">${m2Label}</span></div>
