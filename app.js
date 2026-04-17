@@ -397,11 +397,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
         Object.entries(custom).forEach(([key, val]) => {
             if (!featured.includes(key)) {
-                const numVal = typeof val === 'number' ? val : parseFloat(val);
+                let numVal = typeof val === 'number' ? val : parseFloat(val);
+                let label = formatName(key);
+                
+                // Convert CM to M
+                if (key.endsWith('_ONE_CM')) {
+                    numVal = (numVal / 100).toFixed(1);
+                    label = label.replace(' One Cm', '') + ' (m)';
+                }
+
                 if (!isNaN(numVal)) {
-                    gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value" data-count="${numVal}" data-stat-key="${uuid}_${key}">${numVal}</span></div>`;
+                    gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value" data-count="${numVal}" data-stat-key="${uuid}_${key}">${numVal}</span></div>`;
                 } else {
-                    gridHtml += `<div class="stat-card"><span class="stat-label">${formatName(key)}</span><span class="stat-value">${val}</span></div>`;
+                    gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value">${val}</span></div>`;
                 }
             }
         });
