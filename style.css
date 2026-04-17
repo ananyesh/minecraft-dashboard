@@ -199,18 +199,28 @@ select#sort-by option {
 .p-energy-badge {
     display: inline-flex; align-items: baseline; gap: 6px;
     margin-top: 12px; margin-bottom: -4px; padding: 6px 14px; border-radius: 8px;
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(217, 119, 6, 0.05));
-    border: 1px solid rgba(234, 179, 8, 0.3);
+    background: linear-gradient(135deg, rgba(234, 179, 8, calc(0.05 + 0.10 * var(--intensity, 0))), rgba(217, 119, 6, calc(0.02 + 0.03 * var(--intensity, 0))));
+    border: 1px solid rgba(234, 179, 8, calc(0.1 + 0.2 * var(--intensity, 0)));
     color: #fde047; font-weight: 800; font-size: 14px;
-    box-shadow: 0 0 15px rgba(234, 179, 8, 0.15); transition: var(--transition);
+    box-shadow: 0 0 calc(10px + 20px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.1 + 0.3 * var(--intensity, 0))); transition: var(--transition);
 }
 .player-card:hover .p-energy-badge {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(217, 119, 6, 0.1));
-    box-shadow: 0 0 25px rgba(234, 179, 8, 0.3); transform: scale(1.05);
+    background: linear-gradient(135deg, rgba(234, 179, 8, calc(0.1 + 0.15 * var(--intensity, 0))), rgba(217, 119, 6, calc(0.05 + 0.05 * var(--intensity, 0))));
+    box-shadow: 0 0 calc(15px + 30px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.2 + 0.4 * var(--intensity, 0))); transform: scale(1.05);
 }
-.p-energy-badge i { color: #eab308; text-shadow: 0 0 10px rgba(234, 179, 8, 0.8); font-size: 12px; }
+.p-energy-badge i { color: #eab308; text-shadow: 0 0 calc(2px + 12px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.4 + 0.5 * var(--intensity, 0))); font-size: 12px; }
 .p-energy-badge .val { font-family: 'JetBrains Mono', monospace; font-size: 16px; }
 .p-energy-badge .lab { font-size: 9px; opacity: 0.8; letter-spacing: 1px; }
+
+/* Dead Energy State */
+.energy-dead {
+    box-shadow: 0 0 10px rgba(100, 100, 100, 0.1) !important;
+    background: rgba(255,255,255,0.02) !important;
+    border-color: rgba(255,255,255,0.05) !important;
+    color: #a1a1aa !important;
+}
+.energy-dead i { color: #71717a !important; text-shadow: none !important; }
+.energy-dead .val, .energy-dead .stat-value, .energy-dead .stat-label { color: #a1a1aa !important; text-shadow: none !important; }
 
 /* Quick Stats on Cards */
 .p-quick-stats {
@@ -331,17 +341,18 @@ select#sort-by option {
 
 /* Glowing Energy Detail Card */
 .energy-detail-card {
-    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(217, 119, 6, 0.05));
-    border: 1px solid rgba(234, 179, 8, 0.3) !important;
-    box-shadow: 0 0 20px rgba(234, 179, 8, 0.1);
-    transform: scale(1.02);
+    background: linear-gradient(135deg, rgba(234, 179, 8, calc(0.05 + 0.1 * var(--intensity, 0))), rgba(217, 119, 6, calc(0.02 + 0.03 * var(--intensity, 0))));
+    border: 1px solid rgba(234, 179, 8, calc(0.1 + 0.2 * var(--intensity, 0))) !important;
+    box-shadow: 0 0 calc(15px + 25px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.1 + 0.3 * var(--intensity, 0)));
+    transform: scale(calc(1 + 0.04 * var(--intensity, 0)));
 }
 .energy-detail-card .stat-label {
-    color: #fde047; text-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+    color: #fde047; text-shadow: 0 0 calc(4px + 10px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.3 + 0.5 * var(--intensity, 0)));
 }
 .energy-detail-card .stat-value {
-    color: #facc15 !important; text-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+    color: #facc15 !important; text-shadow: 0 0 calc(8px + 15px * var(--intensity, 0)) rgba(234, 179, 8, calc(0.3 + 0.6 * var(--intensity, 0)));
 }
+.energy-detail-card.energy-dead { transform: none; }
 .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.5px; }
 .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; display: block; color: var(--primary); }
 
