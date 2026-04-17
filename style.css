@@ -328,6 +328,20 @@ select#sort-by option {
     transition: var(--transition);
 }
 .stat-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+
+/* Glowing Energy Detail Card */
+.energy-detail-card {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(217, 119, 6, 0.05));
+    border: 1px solid rgba(234, 179, 8, 0.3) !important;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.1);
+    transform: scale(1.02);
+}
+.energy-detail-card .stat-label {
+    color: #fde047; text-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+}
+.energy-detail-card .stat-value {
+    color: #facc15 !important; text-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+}
 .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; display: block; letter-spacing: 0.5px; }
 .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; display: block; color: var(--primary); }
 
