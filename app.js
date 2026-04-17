@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="status-dot"></span> ${player.online ? 'Active' : 'Offline'}
                     </div>
                     <div class="p-energy-badge">
-                        <i class="fa-solid fa-bolt"></i> <span class="val">${player.energy || 0}</span> <span class="lab">PWR</span>
+                        <i class="fa-solid fa-bolt"></i> <span class="val">${player.energy || 0}</span> <span class="lab">Energy</span>
                     </div>
                     <div class="p-quick-stats">
                         <div class="stat-item"><span class="val">${m1Val}</span><span class="lab">${m1Label}</span></div>
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const energy = player.energy || 0;
 
         let gridHtml = `
-            <div class="stat-card"><span class="stat-label">Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
+            <div class="stat-card energy-detail-card"><span class="stat-label"><i class="fa-solid fa-bolt"></i> Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
             <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
             <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
             <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
