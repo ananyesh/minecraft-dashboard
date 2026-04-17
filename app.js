@@ -202,13 +202,60 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSingleChart(svgId, key, maxVal, color, lineClass) {
         const svg = document.getElementById(svgId);
         if (!svg) return;
+        
         const w = svg.clientWidth;
         const h = 160;
+        const marginL = 35, marginB = 35, marginT = 15, marginR = 15;
+        const chartW = w - marginL - marginR;
+        const chartH = h - marginB - marginT;
+
         const count = playerHistory.length;
-        const stepX = w / (count - 1);
-        const getY = (val) => h - ((val / maxVal) * (h * 0.7)) - (h * 0.1);
-        const path = playerHistory.map((d, i) => `${i * stepX},${getY(d[key])}`);
-        svg.innerHTML = `<path d="M ${path.join(' L ')}" class="graph-line ${lineClass}"></path>`;
+        if (count < 2) {
+            svg.innerHTML = ''; 
+            return;
+        }
+
+        const stepX = chartW / (count - 1);
+        const getY = (val) => marginT + chartH - ((Math.min(val, maxVal) / maxVal) * chartH);
+        
+        let innerHTML = '';
+
+        // Draw Horizontal Grid Lines & Y Axis Labels
+        const gridCount = 4;
+        for (let i = 0; i <= gridCount; i++) {
+            const val = (maxVal / gridCount) * i;
+            const y = getY(val);
+            innerHTML += `
+                <line x1="${marginL}" y1="${y}" x2="${w - marginR}" y2="${y}" class="grid-line"></line>
+                <text x="${marginL - 8}" y="${y + 3}" class="axis-text axis-y">${Math.round(val)}</text>
+            `;
+        }
+
+        // Draw Data Path
+        const points = playerHistory.map((d, i) => `${marginL + i * stepX},${getY(d[key])}`);
+        innerHTML += `<path d="M ${points.join(' L ')}" class="graph-line ${lineClass}"></path>`;
+
+        // Draw X Axis Time Labels (Sample points)
+        const xSampleCount = 5;
+        const xInterval = Math.max(1, Math.floor((count - 1) / (xSampleCount - 1)));
+        for (let i = 0; i < xSampleCount; i++) {
+            const idx = Math.min(i * xInterval, count - 1);
+            const d = playerHistory[idx];
+            if (!d) continue;
+            
+            const x = marginL + idx * stepX;
+            const date = new Date(d.ts * 1000);
+            const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+            
+            innerHTML += `
+                <text x="${x}" y="${h - 8}" class="axis-text axis-x" transform="rotate(-30, ${x}, ${h - 5})">${timeStr}</text>
+            `;
+            
+            // Add a small tick
+            innerHTML += `<line x1="${x}" y1="${marginT + chartH}" x2="${x}" y2="${marginT + chartH + 5}" class="grid-line" style="opacity:0.3"></line>`;
+        }
+
+        svg.innerHTML = innerHTML;
     }
 
     function setupChartTracking(wrapperId, graphId, tooltipId, key, label, unit) {
