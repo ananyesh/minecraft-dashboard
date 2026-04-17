@@ -383,6 +383,16 @@ select#sort-by option {
 .line-tps { stroke: var(--tps-color); }
 .line-mspt { stroke: var(--mspt-color); opacity: 0.6; stroke-dasharray: 4; }
 
+/* Grid & Axis */
+.grid-line { stroke: rgba(255, 255, 255, 0.05); stroke-width: 1; transition: var(--transition); }
+.axis-text { 
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; 
+    fill: var(--text-muted); opacity: 0.7; pointer-events: none;
+    font-weight: 600;
+}
+.axis-y { text-anchor: end; }
+.axis-x { text-anchor: middle; font-size: 8.5px; }
+
 /* Header Actions */
 .header-actions { display: flex; align-items: center; gap: 20px; }
 
