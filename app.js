@@ -450,7 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
         const uuid = player.uuid;
 
+        const energy = player.energy || 0;
+
         let gridHtml = `
+            <div class="stat-card"><span class="stat-label">Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
             <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
             <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
             <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
@@ -460,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}" data-stat-key="${uuid}_mobs">${mobs}</span></div>
             <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}" data-stat-key="${uuid}_damage">${damage}</span></div>`;
 
-        const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED'];
+        const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED', 'DAMAGE_DEALT'];
         Object.entries(custom).forEach(([key, val]) => {
             if (!featured.includes(key)) {
                 let numVal = typeof val === 'number' ? val : parseFloat(val);
