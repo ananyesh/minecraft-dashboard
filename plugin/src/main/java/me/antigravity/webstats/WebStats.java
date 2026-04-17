@@ -113,7 +113,7 @@ public class WebStats extends JavaPlugin implements Listener {
         String dp = String.format("{\"p\":%d, \"t\":%.2f, \"m\":%.1f, \"ts\":%d}", 
                 Bukkit.getOnlinePlayers().size(), currentTps, calculateMSPT(), System.currentTimeMillis() / 1000);
         pulseHistory.add(dp);
-        if (pulseHistory.size() > 60) pulseHistory.removeFirst();
+        if (pulseHistory.size() > 1440) pulseHistory.removeFirst();
         String json = "[" + String.join(",", pulseHistory) + "]";
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
     }
