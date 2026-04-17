@@ -340,35 +340,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const sorted = getSortedPlayers();
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
 
-        let html = '<div class="leaderboard-list">';
-        html += sorted.map((player, index) => {
-            const rank = index + 1;
+        let currentRank = 1;
+        let previousVal = null;
+        
+        // 1. Calculate true ranks before filtering, so even lower players see exact global placement
+        const rankedPlayers = sorted.map((player, index) => {
             const stats = player.stats || {};
             const custom = stats['minecraft:custom'] || {};
             const skinIdentity = player.skin || player.username;
             
             const elo = calculateElo(player);
-            const eloRank = getRank(elo);
-
             let displayVal = elo, displayLabel = 'ELO';
             if (currentSort === 'kills') { displayVal = custom['PLAYER_KILLS'] || 0; displayLabel = 'Kills'; }
             else if (currentSort === 'playtime') { displayVal = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h'; displayLabel = 'Playtime'; }
             else if (currentSort === 'mined') { displayVal = stats.total_mined || 0; displayLabel = 'Mined'; }
+            
+            // Standard competition ranking (1, 2, 2, 4)
+            if (previousVal !== displayVal) {
+                currentRank = index + 1;
+                previousVal = displayVal;
+            }
+            
+            return { ...player, rank: currentRank, displayVal, displayLabel, elo, skinIdentity };
+        });
+
+        // 2. Filter by search logic and limit to top 100
+        const searchTerm = searchInput.value.toLowerCase();
+        const filtered = rankedPlayers.filter(p => p.username.toLowerCase().includes(searchTerm)).slice(0, 100);
+
+        if (filtered.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No players found.</p></div>'; return; }
+
+        let html = '<div class="leaderboard-list">';
+        html += filtered.map((playerData) => {
+            const eloRank = getRank(playerData.elo);
 
             return `
-                <div class="leader-row rank-pos-${rank}" onclick="showPlayerDetails('${player.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
-                    <div class="rank-number" style="color:${eloRank.color}">${rank}</div>
-                    <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/42" alt="${player.username}"></div>
+                <div class="leader-row rank-pos-${playerData.rank}" onclick="showPlayerDetails('${playerData.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
+                    <div class="rank-number" style="color:${eloRank.color}">${playerData.rank}</div>
+                    <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${playerData.skinIdentity}/42" alt="${playerData.username}"></div>
                     <div class="leader-info">
                         <div class="leader-name-wrapper">
-                            <span class="leader-name" title="${player.username}">${player.username}</span>
+                            <span class="leader-name" title="${playerData.username}">${playerData.username}</span>
                             <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                         </div>
-                        <span class="leader-status">${player.online ? '● Active' : '○ Offline'}</span>
+                        <span class="leader-status">${playerData.online ? '● Active' : '○ Offline'}</span>
                     </div>
                     <div class="leader-metric">
-                        <span class="m-val" style="color:${currentSort === 'none' ? eloRank.color : 'var(--primary)'}">${displayVal}</span>
-                        <span class="m-lab">${displayLabel}</span>
+                        <span class="m-val" style="color:${currentSort === 'none' ? eloRank.color : 'var(--primary)'}">${playerData.displayVal}</span>
+                        <span class="m-lab">${playerData.displayLabel}</span>
                     </div>
                 </div>`;
         }).join('');
