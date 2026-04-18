@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QuartzSMP | Dashboard</title>
     <!-- Primary Styles -->
-    <link rel="stylesheet" href="style.css?v=27">
+    <link rel="stylesheet" href="style.css?v=28">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -263,7 +263,22 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
-    <script src="app.js?v=27"></script>
+
+    <!-- Kill Logs Modal -->
+    <div class="kill-logs-modal-overlay" id="kill-logs-overlay" onclick="closeKillLogsModal()">
+        <div class="kill-logs-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-skull"></i> Assimilation Logs</h2>
+                <button class="close-modal-btn" onclick="closeKillLogsModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" id="kill-logs-list">
+                <!-- Data populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=28"></script>
 </body>
 </html>
