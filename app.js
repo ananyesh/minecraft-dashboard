@@ -488,6 +488,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         container.innerHTML = gridHtml;
+        
+        let existingBtn = document.getElementById('btn-kill-logs');
+        if (existingBtn) existingBtn.remove();
+        let btn = document.createElement('button');
+        btn.id = 'btn-kill-logs';
+        btn.className = 'app-btn';
+        btn.innerHTML = '<i class="fa-solid fa-skull"></i> View Kill Logs';
+        btn.onclick = () => openKillLogsModal(uuid);
+        container.parentNode.appendChild(btn);
+
         // Animate all numeric stat values counting up from 0
         animateCounters(container);
 
@@ -612,4 +622,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateAllData();
     setInterval(updateAllData, 30000);
+});
+
+// Global functions for modal overlay outside the DOMContentLoaded scope if necessary, or inside and attached to window
+window.openKillLogsModal = function(uuid) {
+    const player = players.find(p => p.uuid === uuid);
+    if (!player) return;
+    
+    const logs = player.kill_logs || [];
+    const listContainer = document.getElementById('kill-logs-list');
+    
+    if (logs.length === 0) {
+        listContainer.innerHTML = '<div class="kill-log-empty">A pacifist... No blood on their hands.</div>';
+    } else {
+        listContainer.innerHTML = logs.map(l => {
+            const date = new Date(l.time * 1000);
+            const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            return `
+            <div class="kill-log-row">
+                <div class="kill-log-victim">
+                    <img src="https://mc-heads.net/avatar/${l.victim}/24" alt="${l.victim}"> ${l.victim}
+                </div>
+                <div class="kill-log-time">${timeStr}</div>
+            </div>`;
+        }).join('');
+    }
+    document.getElementById('kill-logs-overlay').classList.add('active');
+};
+
+window.closeKillLogsModal = function() {
+    document.getElementById('kill-logs-overlay').classList.remove('active');
+};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const overlay = document.getElementById('kill-logs-overlay');
+        if (overlay && overlay.classList.contains('active')) {
+            window.closeKillLogsModal();
+        }
+    }
 });
