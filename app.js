@@ -531,7 +531,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatName(raw) { return raw.toLowerCase().replace(/minecraft:/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
-    function getContextClass(n, d) { return n.includes('DIAMOND') ? 'bar-diamond' : (n.includes('GOLD') ? 'bar-gold' : (n.includes('IRON') ? 'bar-iron' : d)); }
+    function getContextClass(n, d) { 
+        if (n.includes('DIAMOND')) return 'bar-diamond';
+        if (n.includes('GOLD')) return 'bar-gold';
+        if (n.includes('IRON')) return 'bar-iron';
+        if (n.includes('EMERALD')) return 'bar-emerald';
+        if (n.includes('REDSTONE')) return 'bar-redstone';
+        if (n.includes('LAPIS')) return 'bar-lapis';
+        if (n.includes('COAL')) return 'bar-coal';
+        if (n.includes('COPPER')) return 'bar-copper';
+        if (n.includes('LOG') || n.includes('WOOD') || n.includes('PLANKS')) return 'bar-wood';
+        if (n.includes('CREEPER')) return 'bar-creeper';
+        if (n.includes('ZOMBIE')) return 'bar-zombie';
+        if (n.includes('SKELETON')) return 'bar-skeleton';
+        if (n.includes('ENDERMAN')) return 'bar-enderman';
+        if (n.includes('SPIDER')) return 'bar-spider';
+        return d;
+    }
 
     function renderFaq() {} // FAQ is static HTML, no JS rendering needed
 
