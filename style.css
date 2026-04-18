@@ -325,6 +325,16 @@ select#sort-by option {
 .bar-gold { background: #eab308; box-shadow: 0 0 10px rgba(234,179,8,0.3); }
 .bar-iron { background: #94a3b8; box-shadow: 0 0 10px rgba(148,163,184,0.3); }
 .bar-emerald { background: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.3); }
+.bar-redstone { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+.bar-lapis { background: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+.bar-coal { background: #1f2937; box-shadow: 0 0 10px rgba(31, 41, 55, 0.5); }
+.bar-copper { background: #d97706; box-shadow: 0 0 10px rgba(217, 119, 6, 0.3); }
+.bar-wood { background: #8b5a2b; box-shadow: 0 0 10px rgba(139, 90, 43, 0.3); }
+.bar-creeper { background: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+.bar-zombie { background: #15803d; }
+.bar-skeleton { background: #cbd5e1; }
+.bar-enderman { background: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
+.bar-spider { background: #7f1d1d; }
 .empty-msg { color: var(--text-muted); font-size: 13px; font-style: italic; opacity: 0.5; padding: 10px 0; }
 
 .player-profile-header { text-align: center; }
