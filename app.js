@@ -395,18 +395,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }).join('');
         html += '</div>';
-        // Removed Leaderboard Graph Container rendering as requested
         
         playerGrid.innerHTML = html;
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
     }
 
     function calculateElo(player) {
-        return eloMap[player.uuid] ?? (() => {
-            const c = player.stats?.['minecraft:custom'] || {};
-            const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-            return h * 10;
-        })();
+        // Now using authoritative ELO synced from the Java backend
+        return player.elo ?? 100;
     }
 
     function getRank(elo) {
@@ -496,37 +492,20 @@ document.addEventListener('DOMContentLoaded', () => {
         let btn = document.createElement('button');
         btn.id = 'btn-kill-logs';
         btn.className = 'app-btn';
-        btn.innerHTML = '<i class="fa-solid fa-skull"></i> View Kill Logs';
+        btn.innerHTML = '<i class="fa-solid fa-scroll"></i> View Elo History';
         btn.onclick = () => openKillLogsModal(uuid);
         container.parentNode.appendChild(btn);
 
-        // Render Elo Progression Line Graph
-        const playerLogs = [...(player.kill_logs || [])].reverse(); 
-        const victimCounts = {};
-        
-        const historicalGains = playerLogs.map(l => {
-            const count = victimCounts[l.victim] || 0;
-            const victimPlayer = players.find(p => p.username === l.victim || p.skin === l.victim);
-            let baseEloGain = 12; 
-            if (victimPlayer) {
-                const killerElo = calculateElo(player);
-                const victimElo = calculateElo(victimPlayer);
-                const expectedScore = 1 / (1 + Math.pow(10, (victimElo - killerElo) / 400));
-                baseEloGain = Math.round(32 * (1 - expectedScore));
-            }
-            const stolenElo = Math.max(1, Math.round(baseEloGain * Math.pow(0.75, count)));
-            victimCounts[l.victim] = count + 1;
-            return stolenElo;
-        });
-
+        // Render Elo Progression Line Graph from server-side history
+        const historyLogs = [...(player.elo_logs || [])].reverse();
         let currElo = calculateElo(player);
         const historyData = [currElo]; 
         
-        for (let i = historicalGains.length - 1; i >= 0; i--) {
-            currElo = currElo - historicalGains[i];
+        for (let i = 0; i < historyLogs.length; i++) {
+            currElo = currElo - historyLogs[i].change;
             historyData.unshift(currElo);
         }
-        if (historyData.length < 2) historyData.unshift(currElo - 5, currElo - 2); 
+        if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
         
         const svg = document.getElementById('svg-elo-progression');
         if (svg) {
@@ -555,32 +534,6 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // Initialize tooltip dynamically if not exist
-        if (!document.getElementById('elo-hover-tooltip')) {
-            const eloHoverTooltip = document.createElement('div');
-            eloHoverTooltip.id = 'elo-hover-tooltip';
-            eloHoverTooltip.style.cssText = 'position:fixed; display:none; background:rgba(20,20,25,0.95); backdrop-filter:blur(6px); border:1px solid rgba(74, 222, 128, 0.4); color:#4ade80; padding:6px 12px; border-radius:6px; pointer-events:none; font-weight:bold; font-size:13px; font-family:monospace; z-index:99999; box-shadow:0 8px 16px rgba(74, 222, 128, 0.15); transition: opacity 0.1s;';
-            document.body.appendChild(eloHoverTooltip);
-            
-            window.showEloTooltip = function(e, text) {
-                const tooltip = document.getElementById('elo-hover-tooltip');
-                tooltip.innerHTML = text;
-                tooltip.style.display = 'block';
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY - 15) + 'px';
-            };
-            window.hideEloTooltip = function() {
-                document.getElementById('elo-hover-tooltip').style.display = 'none';
-            };
-            window.moveEloTooltip = function(e) {
-                const tooltip = document.getElementById('elo-hover-tooltip');
-                if (tooltip.style.display === 'block') {
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY - 15) + 'px';
-                }
-            };
-        }
-
         // Animate all numeric stat values counting up from 0
         animateCounters(container);
 
@@ -607,69 +560,72 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (key) statCache[key] = target;
-            if (prevVal !== target) setTimeout(() => odo.update(target), 50);
+            odo.update(target);
         });
     }
 
-    function renderStatChart(container, dataMap, defaultClass) {
-        const items = Object.entries(dataMap || {}).map(([n, c]) => ({ n, c })).sort((a, b) => b.c - a.c).slice(0, 10);
-        if (items.length === 0) { container.innerHTML = '<div class="empty-msg">No entries.</div>'; return; }
-        const max = Math.max(...items.map(i => i.c), 1);
-        container.innerHTML = items.map(i => `
-            <div class="graph-row">
-                <span class="graph-label">${formatName(i.n)}</span>
-                <div class="bar-container"><div class="bar-fill ${getContextClass(i.n, defaultClass)}" style="width: ${(i.c/max)*100}%"></div></div>
-                <span class="graph-value">${i.c}</span>
-            </div>`).join('');
+    function renderStatChart(container, data, barClass) {
+        if (!container) return;
+        const sorted = Object.entries(data)
+            .sort((a,b) => b[1] - a[1])
+            .slice(0, 10);
+        
+        if (sorted.length === 0) {
+            container.innerHTML = '<div class="no-data">No recorded activity.</div>';
+            return;
+        }
+
+        const max = Math.max(...sorted.map(s => s[1]), 1);
+        container.innerHTML = sorted.map(([key, val]) => {
+            const width = (val / max) * 100;
+            const label = formatName(key);
+            const ctxColor = getContextClass(key) || barClass;
+            return `
+                <div class="graph-row">
+                    <div class="graph-label">${label}</div>
+                    <div class="graph-bar-container">
+                        <div class="graph-bar ${ctxColor}" style="width: ${width}%"></div>
+                        <span class="graph-value">${val.toLocaleString()}</span>
+                    </div>
+                </div>`;
+        }).join('');
     }
 
-    function formatName(raw) { return raw.toLowerCase().replace(/minecraft:/g, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
-    function getContextClass(n, d) { 
-        if (n.includes('DIAMOND')) return 'bar-diamond';
-        if (n.includes('GOLD')) return 'bar-gold';
-        if (n.includes('IRON')) return 'bar-iron';
-        if (n.includes('EMERALD')) return 'bar-emerald';
-        if (n.includes('REDSTONE')) return 'bar-redstone';
-        if (n.includes('LAPIS')) return 'bar-lapis';
-        if (n.includes('COAL')) return 'bar-coal';
-        if (n.includes('COPPER')) return 'bar-copper';
-        if (n.includes('LOG') || n.includes('WOOD') || n.includes('PLANKS')) return 'bar-wood';
-        if (n.includes('CREEPER')) return 'bar-creeper';
-        if (n.includes('ZOMBIE')) return 'bar-zombie';
-        if (n.includes('SKELETON')) return 'bar-skeleton';
-        if (n.includes('ENDERMAN')) return 'bar-enderman';
-        if (n.includes('SPIDER')) return 'bar-spider';
-        return d;
+    function formatName(str) {
+        return str.replace('minecraft:', '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    }
+
+    function getContextClass(key) {
+        if (key.includes('diamond')) return 'bar-diamond';
+        if (key.includes('gold')) return 'bar-gold';
+        if (key.includes('iron')) return 'bar-iron';
+        if (key.includes('coal')) return 'bar-coal';
+        if (key.includes('lapis')) return 'bar-lapis';
+        if (key.includes('redstone')) return 'bar-redstone';
+        if (key.includes('copper')) return 'bar-copper';
+        if (key.includes('wood') || key.includes('log')) return 'bar-wood';
+        if (key.includes('emerald')) return 'bar-emerald';
+        if (key.includes('stone') || key.includes('cobble')) return 'bar-stone';
+        if (key.includes('zombie') || key.includes('skeleton') || key.includes('creeper') || key.includes('spider')) return 'bar-offline';
+        return null;
     }
 
     function renderFaq() {} // FAQ is static HTML, no JS rendering needed
 
     function switchTab(tab) {
-        navPlayers.classList.remove('active');
-        navLeaderboards.classList.remove('active');
-        navHealth.classList.remove('active');
-        document.getElementById('nav-faq').classList.remove('active');
+        currentTab = tab;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         playersSection.style.display = 'none';
         healthSection.style.display = 'none';
         document.getElementById('faq-section').style.display = 'none';
 
-        const sortControls = document.querySelector('.sort-controls');
-        currentTab = tab;
-        if (tab === 'players') { 
+        if (tab === 'players') {
             navPlayers.classList.add('active'); 
-            playersSection.style.display = 'block';
-            playerGrid.className = 'player-grid';
-            if (sortControls) sortControls.classList.add('hide');
-            currentSort = 'none';
-            sortBySelect.value = 'none';
-        } else if (tab === 'leaderboard') { 
+            playersSection.style.display = 'block'; 
+        } else if (tab === 'leaderboard') {
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
-            playerGrid.className = 'leaderboard-mode';
-            if (sortControls) sortControls.classList.remove('hide');
-            currentSort = 'none';
-            sortBySelect.value = 'none'; 
-        } else if (tab === 'health') { 
+        } else if (tab === 'health') {
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
             setTimeout(renderTripleGraphs, 100);
@@ -708,52 +664,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const player = players.find(p => p.uuid === uuid);
         if (!player) return;
         
-        const logs = player.kill_logs || [];
+        const logs = player.elo_logs || [];
         const listContainer = document.getElementById('kill-logs-list');
         
         if (logs.length === 0) {
-            listContainer.innerHTML = '<div class="kill-log-empty">A pacifist... No blood on their hands.</div>';
+            listContainer.innerHTML = '<div class="kill-log-empty">No Elo history recorded yet.</div>';
         } else {
-            // Calculate diminishing returns temporally (oldest to newest)
-            const victimCounts = {};
-            const chronologicalLogs = [...logs].reverse();
-            
-            const enhancedLogs = chronologicalLogs.map(l => {
-                const count = victimCounts[l.victim] || 0;
-                
-                // Attempt to find the victim on the live leaderboard to run real Elo comparison
-                const victimPlayer = players.find(p => p.username === l.victim || p.skin === l.victim);
-                let baseEloGain = 12; // Fallback if victim is completely wiped from db
-                
-                if (victimPlayer) {
-                    const killerElo = calculateElo(player);
-                    const victimElo = calculateElo(victimPlayer);
-                    
-                    // Standard Elo Math (Win Probability and K-Factor 32)
-                    const expectedScore = 1 / (1 + Math.pow(10, (victimElo - killerElo) / 400));
-                    baseEloGain = Math.round(32 * (1 - expectedScore));
-                }
-                
-                // Diminishing returns: drop off 25% of the Elo value per consecutive kill to prevent farming
-                const stolenElo = Math.max(1, Math.round(baseEloGain * Math.pow(0.75, count)));
-                
-                victimCounts[l.victim] = count + 1;
-                
-                return { ...l, stolenElo };
-            }).reverse(); // Re-reverse back to Newest First for the UI display
-
-            listContainer.innerHTML = enhancedLogs.map(l => {
+            listContainer.innerHTML = logs.map(l => {
                 const date = new Date(l.time * 1000);
                 const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                
+                const isPositive = l.change >= 0;
+                const changeStr = isPositive ? `+${l.change}` : `${l.change}`;
+                const changeColor = isPositive ? '#4ade80' : '#ef4444';
+                const icon = l.type === 'Kill' ? '⚔️' : (l.type === 'Death' ? '💀' : '⏳');
+
                 return `
                 <div class="kill-log-row">
                     <div class="kill-log-victim">
-                        <img src="https://mc-heads.net/avatar/${l.victim}/24" alt="${l.victim}"> 
-                        ${l.victim}
-                        <span style="color:#4ade80; font-size:11px; margin-left:6px; background:rgba(74, 222, 128, 0.1); padding:2px 6px; border-radius:4px; font-weight:800;">+${l.stolenElo} ELO</span>
+                        <span style="font-size:18px; margin-right:8px;">${icon}</span>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-size:14px; font-weight:600;">${l.type}: ${l.details}</span>
+                            <span style="font-size:11px; color:var(--text-muted);">${timeStr}</span>
+                        </div>
                     </div>
-                    <div class="kill-log-time">${timeStr}</div>
+                    <div style="color:${changeColor}; font-weight:800; font-family:monospace; background:rgba(0,0,0,0.2); padding:4px 8px; border-radius:4px;">
+                        ${changeStr} ELO
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -772,6 +708,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // Initialize tooltip dynamically if not exist
+    if (!document.getElementById('elo-hover-tooltip')) {
+        const eloHoverTooltip = document.createElement('div');
+        eloHoverTooltip.id = 'elo-hover-tooltip';
+        eloHoverTooltip.style.cssText = 'position:fixed; display:none; background:rgba(20,20,25,0.95); backdrop-filter:blur(6px); border:1px solid rgba(74, 222, 128, 0.4); color:#4ade80; padding:6px 12px; border-radius:6px; pointer-events:none; font-weight:bold; font-size:13px; font-family:monospace; z-index:99999; box-shadow:0 8px 16px rgba(74, 222, 128, 0.15); transition: opacity 0.1s;';
+        document.body.appendChild(eloHoverTooltip);
+        
+        window.showEloTooltip = function(e, text) {
+            const tooltip = document.getElementById('elo-hover-tooltip');
+            tooltip.innerHTML = text;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY - 15) + 'px';
+        };
+        window.hideEloTooltip = function() {
+            const tooltip = document.getElementById('elo-hover-tooltip');
+            if (tooltip) tooltip.style.display = 'none';
+        };
+        window.moveEloTooltip = function(e) {
+            const tooltip = document.getElementById('elo-hover-tooltip');
+            if (tooltip && tooltip.style.display === 'block') {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY - 15) + 'px';
+            }
+        };
+    }
 
     updateAllData();
     setInterval(updateAllData, 30000);
