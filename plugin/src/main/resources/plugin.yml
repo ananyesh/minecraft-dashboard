@@ -4,3 +4,7 @@ main: me.antigravity.webstats.WebStats
 api-version: 1.21
 authors: [Antigravity]
 description: Exports player statistics to a web dashboard via HTTP.
+commands:
+  elo:
+    description: Check your ELO and rank.
+    usage: /elo [player]
