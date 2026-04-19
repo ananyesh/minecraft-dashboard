@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const eloRank = getRank(playerData.elo);
 
             return `
-                <div class="leader-row rank-pos-${playerData.rank}" onclick="showPlayerDetails('${playerData.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
+                <div class="leader-row rank-${playerData.rank}" onclick="showPlayerDetails('${playerData.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
                     <div class="rank-number" style="color:${eloRank.color}">${playerData.rank}</div>
                     <div class="leader-avatar"><img src="https://mc-heads.net/avatar/${playerData.skinIdentity}/42" alt="${playerData.username}"></div>
                     <div class="leader-info">
@@ -395,6 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }).join('');
         html += '</div>';
+        
+        // SWITCH TO LIST MODE
+        playerGrid.className = 'leaderboard-mode';
         
         playerGrid.innerHTML = html;
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
@@ -622,9 +625,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tab === 'players') {
             navPlayers.classList.add('active'); 
             playersSection.style.display = 'block'; 
+            playerGrid.className = 'player-grid'; // Reset to grid
         } else if (tab === 'leaderboard') {
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
+            // In list mode, renderLeaderboard handles the class
         } else if (tab === 'health') {
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
