@@ -631,20 +631,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (logs.length === 0) {
             listContainer.innerHTML = '<div class="kill-log-empty">A pacifist... No blood on their hands.</div>';
         } else {
-            listContainer.innerHTML = logs.map(l => {
+            // Calculate diminishing returns temporally (oldest to newest)
+            const victimCounts = {};
+            const chronologicalLogs = [...logs].reverse();
+            
+            const enhancedLogs = chronologicalLogs.map(l => {
+                const count = victimCounts[l.victim] || 0;
+                
+                // Generate a flat base Elo deterministic to the victim's name
+                const seed = l.victim.charCodeAt(0) + (l.victim.charCodeAt(l.victim.length - 1) * 3);
+                const baseElo = (seed % 15) + 12; // 12 -> 26 starting Elo
+                
+                // Hard diminished returns per consecutive kill: drops by 6 Elo per kill, floor at +1 or +0
+                const stolenElo = Math.max(1, baseElo - (count * 6));
+                victimCounts[l.victim] = count + 1;
+                
+                return { ...l, stolenElo };
+            }).reverse(); // Re-reverse back to Newest First for the UI display
+
+            listContainer.innerHTML = enhancedLogs.map(l => {
                 const date = new Date(l.time * 1000);
                 const timeStr = date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-                
-                // Deterministic ELO Exchange Formula based on timestamp and victim
-                const seed = l.time + l.victim.charCodeAt(0);
-                const stolenElo = (seed % 20) + 8; // Random baseline between 8 and 27 ELO
                 
                 return `
                 <div class="kill-log-row">
                     <div class="kill-log-victim">
                         <img src="https://mc-heads.net/avatar/${l.victim}/24" alt="${l.victim}"> 
                         ${l.victim}
-                        <span style="color:#4ade80; font-size:11px; margin-left:6px; background:rgba(74, 222, 128, 0.1); padding:2px 6px; border-radius:4px; font-weight:800;">+${stolenElo} ELO</span>
+                        <span style="color:#4ade80; font-size:11px; margin-left:6px; background:rgba(74, 222, 128, 0.1); padding:2px 6px; border-radius:4px; font-weight:800;">+${l.stolenElo} ELO</span>
                     </div>
                     <div class="kill-log-time">${timeStr}</div>
                 </div>`;
