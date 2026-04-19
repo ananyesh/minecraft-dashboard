@@ -638,12 +638,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const enhancedLogs = chronologicalLogs.map(l => {
                 const count = victimCounts[l.victim] || 0;
                 
-                // Generate a flat base Elo deterministic to the victim's name
-                const seed = l.victim.charCodeAt(0) + (l.victim.charCodeAt(l.victim.length - 1) * 3);
-                const baseElo = (seed % 15) + 12; // 12 -> 26 starting Elo
+                // Attempt to find the victim on the live leaderboard to run real Elo comparison
+                const victimPlayer = players.find(p => p.username === l.victim || p.skin === l.victim);
+                let baseEloGain = 12; // Fallback if victim is completely wiped from db
                 
-                // Hard diminished returns per consecutive kill: drops by 6 Elo per kill, floor at +1 or +0
-                const stolenElo = Math.max(1, baseElo - (count * 6));
+                if (victimPlayer) {
+                    const killerElo = calculateElo(player);
+                    const victimElo = calculateElo(victimPlayer);
+                    
+                    // Standard Elo Math (Win Probability and K-Factor 32)
+                    const expectedScore = 1 / (1 + Math.pow(10, (victimElo - killerElo) / 400));
+                    baseEloGain = Math.round(32 * (1 - expectedScore));
+                }
+                
+                // Diminishing returns: drop off 25% of the Elo value per consecutive kill to prevent farming
+                const stolenElo = Math.max(1, Math.round(baseEloGain * Math.pow(0.75, count)));
+                
                 victimCounts[l.victim] = count + 1;
                 
                 return { ...l, stolenElo };
