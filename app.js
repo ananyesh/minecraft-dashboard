@@ -395,18 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }).join('');
         html += '</div>';
-        
-        const eloContainer = document.getElementById('leaderboard-graph-container');
-        if (eloContainer) {
-            if (currentSort === 'none' && filtered.length > 0) {
-                eloContainer.style.display = 'block';
-                const countMap = {};
-                filtered.slice(0, 10).forEach(p => countMap[p.username] = p.elo);
-                renderStatChart(document.getElementById('server-elo-graph'), countMap, 'bar-diamond');
-            } else {
-                eloContainer.style.display = 'none';
-            }
-        }
+        // Removed Leaderboard Graph Container rendering as requested
         
         playerGrid.innerHTML = html;
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
@@ -551,9 +540,35 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const points = historyData.map((d, i) => `${i * stepX},${getY(d)}`);
             svg.innerHTML = `
-                <path d="M ${points.join(' L ')}" fill="none" stroke="#7BFCFF" stroke-width="3"></path>
-                ${points.map((p, i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="5" fill="#1e1e2f" stroke="#7BFCFF" stroke-width="2"><title>${historyData[i]} ELO</title></circle>`).join('')}
+                <path d="M ${points.join(' L ')}" fill="none" stroke="#4ade80" stroke-width="3"></path>
+                ${points.map((p, i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="6" fill="#1e1e2f" stroke="#4ade80" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" class="elo-node" style="cursor:crosshair;"></circle>`).join('')}
             `;
+        }
+
+        // Initialize tooltip dynamically if not exist
+        if (!document.getElementById('elo-hover-tooltip')) {
+            const eloHoverTooltip = document.createElement('div');
+            eloHoverTooltip.id = 'elo-hover-tooltip';
+            eloHoverTooltip.style.cssText = 'position:fixed; display:none; background:#111; border:1px solid #4ade80; color:#4ade80; padding:4px 8px; border-radius:6px; pointer-events:none; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 4px 12px rgba(74, 222, 128, 0.2);';
+            document.body.appendChild(eloHoverTooltip);
+            
+            window.showEloTooltip = function(e, text) {
+                const tooltip = document.getElementById('elo-hover-tooltip');
+                tooltip.innerHTML = text;
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY - 15) + 'px';
+            };
+            window.hideEloTooltip = function() {
+                document.getElementById('elo-hover-tooltip').style.display = 'none';
+            };
+            window.moveEloTooltip = function(e) {
+                const tooltip = document.getElementById('elo-hover-tooltip');
+                if (tooltip.style.display === 'block') {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY - 15) + 'px';
+                }
+            };
         }
 
         // Animate all numeric stat values counting up from 0
