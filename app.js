@@ -395,6 +395,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }).join('');
         html += '</div>';
+        
+        const eloContainer = document.getElementById('leaderboard-graph-container');
+        if (eloContainer) {
+            if (currentSort === 'none' && filtered.length > 0) {
+                eloContainer.style.display = 'block';
+                const countMap = {};
+                filtered.slice(0, 10).forEach(p => countMap[p.username] = p.elo);
+                renderStatChart(document.getElementById('server-elo-graph'), countMap, 'bar-diamond');
+            } else {
+                eloContainer.style.display = 'none';
+            }
+        }
+        
         playerGrid.innerHTML = html;
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
     }
@@ -497,6 +510,51 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.innerHTML = '<i class="fa-solid fa-skull"></i> View Kill Logs';
         btn.onclick = () => openKillLogsModal(uuid);
         container.parentNode.appendChild(btn);
+
+        // Render Elo Progression Line Graph
+        const playerLogs = [...(player.kill_logs || [])].reverse(); 
+        const victimCounts = {};
+        
+        const historicalGains = playerLogs.map(l => {
+            const count = victimCounts[l.victim] || 0;
+            const victimPlayer = players.find(p => p.username === l.victim || p.skin === l.victim);
+            let baseEloGain = 12; 
+            if (victimPlayer) {
+                const killerElo = calculateElo(player);
+                const victimElo = calculateElo(victimPlayer);
+                const expectedScore = 1 / (1 + Math.pow(10, (victimElo - killerElo) / 400));
+                baseEloGain = Math.round(32 * (1 - expectedScore));
+            }
+            const stolenElo = Math.max(1, Math.round(baseEloGain * Math.pow(0.75, count)));
+            victimCounts[l.victim] = count + 1;
+            return stolenElo;
+        });
+
+        let currElo = calculateElo(player);
+        const historyData = [currElo]; 
+        
+        for (let i = historicalGains.length - 1; i >= 0; i--) {
+            currElo = currElo - historicalGains[i];
+            historyData.unshift(currElo);
+        }
+        if (historyData.length < 2) historyData.unshift(currElo - 5, currElo - 2); 
+        
+        const svg = document.getElementById('svg-elo-progression');
+        if (svg) {
+            svg.innerHTML = '';
+            svg.setAttribute('viewBox', `0 0 1000 100`);
+            const maxVal = Math.max(...historyData) + 15;
+            const minVal = Math.max(0, Math.min(...historyData) - 15);
+            const range = maxVal - minVal || 1;
+            const stepX = 1000 / (historyData.length - 1);
+            const getY = (val) => 100 - (((val - minVal) / range) * 85 + 5); 
+            
+            const points = historyData.map((d, i) => `${i * stepX},${getY(d)}`);
+            svg.innerHTML = `
+                <path d="M ${points.join(' L ')}" fill="none" stroke="#7BFCFF" stroke-width="3"></path>
+                ${points.map((p, i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="5" fill="#1e1e2f" stroke="#7BFCFF" stroke-width="2"><title>${historyData[i]} ELO</title></circle>`).join('')}
+            `;
+        }
 
         // Animate all numeric stat values counting up from 0
         animateCounters(container);
