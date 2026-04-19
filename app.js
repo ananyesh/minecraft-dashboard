@@ -540,8 +540,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const points = historyData.map((d, i) => `${i * stepX},${getY(d)}`);
             svg.innerHTML = `
+                <defs>
+                    <linearGradient id="eloAreaGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#4ade80" stop-opacity="0.35" />
+                        <stop offset="100%" stop-color="#4ade80" stop-opacity="0.0" />
+                    </linearGradient>
+                </defs>
+                <path d="M ${points.join(' L ')} L 1000,100 L 0,100 Z" fill="url(#eloAreaGlow)" stroke="none"></path>
                 <path d="M ${points.join(' L ')}" fill="none" stroke="#4ade80" stroke-width="3"></path>
-                ${points.map((p, i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="6" fill="#1e1e2f" stroke="#4ade80" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" class="elo-node" style="cursor:crosshair;"></circle>`).join('')}
+                ${points.map((p, i) => `
+                    <circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="#111" stroke="#4ade80" stroke-width="2" pointer-events="none"></circle>
+                    <circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="20" fill="transparent" stroke="transparent" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" style="cursor:crosshair;"></circle>
+                `).join('')}
             `;
         }
 
@@ -549,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('elo-hover-tooltip')) {
             const eloHoverTooltip = document.createElement('div');
             eloHoverTooltip.id = 'elo-hover-tooltip';
-            eloHoverTooltip.style.cssText = 'position:fixed; display:none; background:#111; border:1px solid #4ade80; color:#4ade80; padding:4px 8px; border-radius:6px; pointer-events:none; font-weight:bold; font-size:12px; z-index:99999; box-shadow:0 4px 12px rgba(74, 222, 128, 0.2);';
+            eloHoverTooltip.style.cssText = 'position:fixed; display:none; background:rgba(20,20,25,0.95); backdrop-filter:blur(6px); border:1px solid rgba(74, 222, 128, 0.4); color:#4ade80; padding:6px 12px; border-radius:6px; pointer-events:none; font-weight:bold; font-size:13px; font-family:monospace; z-index:99999; box-shadow:0 8px 16px rgba(74, 222, 128, 0.15); transition: opacity 0.1s;';
             document.body.appendChild(eloHoverTooltip);
             
             window.showEloTooltip = function(e, text) {
