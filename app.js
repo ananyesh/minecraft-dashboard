@@ -82,52 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ─── ELO: Iterative multi-pass chess ELO ─────────────────────────────────
-    // Pass 1 seeds from playtime. Each iteration refines using previous ELOs
-    // so kill/death gains truly reflect PvP rating differences.
-    function recalculateAllElos() {
-        if (players.length === 0) return;
-        const K = 32;
 
-        // Seed pass: hours * 10
-        players.forEach(p => {
-            const c = p.stats?.['minecraft:custom'] || {};
-            const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-            eloMap[p.uuid] = Math.max(1, h * 10);
-        });
-
-        // 5 convergence passes
-        for (let iter = 0; iter < 5; iter++) {
-            const next = {};
-            players.forEach(p => {
-                const c = p.stats?.['minecraft:custom'] || {};
-                const kb = p.stats?.['minecraft:killed_by'] || {};
-                const kills = c['PLAYER_KILLS'] || 0;
-                const h = Math.floor((c['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60);
-                const pvpDeaths = kb['minecraft:player'] || kb['player'] || 0;
-
-                const myElo = eloMap[p.uuid] || 1;
-                const opponents = players.filter(op => op.uuid !== p.uuid);
-                const avgOppElo = opponents.length > 0
-                    ? opponents.reduce((s, op) => s + (eloMap[op.uuid] || 1), 0) / opponents.length
-                    : 100;
-
-                // Expected score probability (chess formula)
-                const expected = 1 / (1 + Math.pow(10, (avgOppElo - myElo) / 400));
-                // Zero-sum: eloPerKill + eloPerDeath = K (conservation)
-                const eloPerKill  = K * (1 - expected);
-                const eloPerDeath = K * expected;
-
-                next[p.uuid] = Math.max(0, Math.round(
-                    (h * 10) + (kills * eloPerKill) - (pvpDeaths * eloPerDeath)
-                ));
-            });
-            eloMap = next;
-        }
-    }
 
     function renderAll() {
-        recalculateAllElos();
         if (currentTab === 'players') renderPlayersGrid();
         else if (currentTab === 'leaderboard') renderLeaderboard();
         else if (currentTab === 'faq') renderFaq();
