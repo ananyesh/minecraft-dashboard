@@ -45,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             date: "April 21, 2026",
             version: "v1.3",
-            author: "ToastedToast",
-            handle: "@toasteddotdev",
-            avatar: "https://i.imgur.com/8QpX0p6.png", // Placeholder avatar
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42", // Updated to your MC skin if available
             title: "The Authoritative ELO Update",
             desc: "A massive core engine migration. The dashboard now uses authoritative server-side ELO math, eliminating sync discrepancies.",
             features: ["Synchronized Score Repair", "Server-Side ELO Engine", "Ghost Player Protection"],
