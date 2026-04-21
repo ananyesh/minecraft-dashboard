@@ -44,6 +44,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const updates = [
         {
             date: "April 21, 2026",
+            version: "v1.4",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "History-First Authoritative ELO",
+            desc: "ELO is now 100% determined by your history logs. We've removed the log cap and starting offset for maximum accuracy.",
+            features: ["Uncapped History Logs", "Automatic Join-Repair", "0-Base Scaling"],
+            content: `
+                <h2>The Absolute Source of Truth</h2>
+                <p>We've heard your feedback regarding ELO drift. From now on, your ELO score is no longer a separate number—it is the direct sum of every gain and loss in your history logs.</p>
+                <p>To ensure this is 100% accurate, we have <strong>removed the 50-log limit</strong>. Every single action you take is now a permanent part of your legacy.</p>
+
+                <h2>Automatic Synchronization</h2>
+                <p>You no longer need to run manual repair commands. Every time you join the server, the Quartz engine performas a <strong>"Silent Repair"</strong> that recalculates your score from scratch based on your logs.</p>
+
+                <h2>Starting from Scratch</h2>
+                <p>We have removed the default 100 ELO starting bonus. Everyone now starts at <span class="highlight-text">0</span>, making every point you earn feel more meaningful. Don't worry—your ranks have been adjusted to match this new scale!</p>
+            `
+        },
+        {
+            date: "April 21, 2026",
             version: "v1.3",
             author: "ananyesh",
             handle: "@ananyesh",
