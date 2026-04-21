@@ -506,11 +506,23 @@ select#sort-by option {
 .leader-status { font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 1px; }
 
 .leader-metric {
-    text-align: right; min-width: 120px; padding: 10px 20px;
+    text-align: right; min-width: 140px; padding: 8px 16px;
     background: rgba(255,255,255,0.03); border-radius: 12px;
+    display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
 }
-.leader-metric .m-val { display: block; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: var(--primary); }
-.leader-metric .m-lab { display: block; font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
+.leader-metric .m-val { display: block; font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 800; color: var(--primary); line-height: 1.1; }
+.leader-metric .m-lab { display: block; font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); opacity: 0.8; }
+
+/* New Mini Progress Bar */
+.mini-rank-progress {
+    width: 60px; height: 3px; background: rgba(255,255,255,0.05);
+    border-radius: 100px; overflow: hidden; margin-top: 4px;
+}
+.mini-rank-fill {
+    height: 100%; background: var(--primary);
+    box-shadow: 0 0 10px var(--primary-glow);
+    border-radius: inherit; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* Kill Logs Modal */
 .kill-logs-modal-overlay {
