@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Players Online card
         const playersEl = document.getElementById('h-players');
-        const onlineCount = players.filter(p => p.online).length;
+        const onlineCount = serverHealth.status === 'offline' ? 0 : players.filter(p => p.online).length;
         if (typeof Odometer !== 'undefined' && playersEl) {
             if (!playersOdo) {
                 playersOdo = new Odometer({ el: playersEl, value: 0, format: 'd', theme: 'minimal', duration: 800 });
@@ -376,6 +376,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '<div class="leaderboard-list">';
         html += filtered.map((playerData) => {
             const eloRank = getRank(playerData.elo);
+            
+            // Calculate progress to next rank
+            const min = eloRank.min || 0;
+            const next = eloRank.next || 100;
+            const range = next - min;
+            const progress = range > 0 ? Math.min(100, Math.max(0, ((playerData.elo - min) / range) * 100)) : 100;
+
+            const isOnline = playerData.online && serverHealth.status !== 'offline';
 
             return `
                 <div class="leader-row rank-${playerData.rank}" onclick="showPlayerDetails('${playerData.uuid}')" style="border-color:${eloRank.color}33; border-left:3px solid ${eloRank.color}">
@@ -386,11 +394,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="leader-name" title="${playerData.username}">${playerData.username}</span>
                             <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                         </div>
-                        <span class="leader-status">${playerData.online ? '● Active' : '○ Offline'}</span>
+                        <span class="leader-status">${isOnline ? '● Active' : '○ Offline'}</span>
                     </div>
                     <div class="leader-metric">
                         <span class="m-val" style="color:${currentSort === 'none' ? eloRank.color : 'var(--primary)'}">${playerData.displayVal}</span>
                         <span class="m-lab">${playerData.displayLabel}</span>
+                        <div class="mini-rank-progress">
+                            <div class="mini-rank-fill" style="width: ${progress}%; background: ${eloRank.color}; --primary-glow: ${eloRank.color}66;"></div>
+                        </div>
                     </div>
                 </div>`;
         }).join('');
@@ -409,12 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getRank(elo) {
-        if (elo >= 3000) return { name: 'Netherite', color: '#9D84CD', icon: '🖤' };
-        if (elo >= 1500) return { name: 'Diamond',   color: '#7BFCFF', icon: '💎' };
-        if (elo >= 700)  return { name: 'Emerald',   color: '#44E880', icon: '💚' };
-        if (elo >= 300)  return { name: 'Gold',      color: '#FFD700', icon: '🥇' };
-        if (elo >= 100)  return { name: 'Iron',      color: '#C8C8C8', icon: '⚙️' };
-        return              { name: 'Dirt',       color: '#A0714A', icon: '🟫' };
+        if (elo >= 3000) return { name: 'Netherite', color: '#9D84CD', icon: '🖤', min: 3000, next: 5000 };
+        if (elo >= 1500) return { name: 'Diamond',   color: '#7BFCFF', icon: '💎', min: 1500, next: 3000 };
+        if (elo >= 700)  return { name: 'Emerald',   color: '#44E880', icon: '💚', min: 700,  next: 1500 };
+        if (elo >= 300)  return { name: 'Gold',      color: '#FFD700', icon: '🥇', min: 300,  next: 700  };
+        if (elo >= 100)  return { name: 'Iron',      color: '#C8C8C8', icon: '⚙️', min: 100,  next: 300  };
+        return              { name: 'Dirt',       color: '#A0714A', icon: '🟫', min: 0,    next: 100  };
     }
 
     function getSortedPlayers() {
