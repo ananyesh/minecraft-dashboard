@@ -442,16 +442,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function calculateElo(player) {
         // Now using authoritative ELO synced from the Java backend
-        return player.elo ?? 100;
+        return player.elo ?? 0;
     }
 
     function getRank(elo) {
-        if (elo >= 3000) return { name: 'Netherite', color: '#9D84CD', icon: '🖤', min: 3000, next: 5000 };
-        if (elo >= 1500) return { name: 'Diamond',   color: '#7BFCFF', icon: '💎', min: 1500, next: 3000 };
-        if (elo >= 700)  return { name: 'Emerald',   color: '#44E880', icon: '💚', min: 700,  next: 1500 };
-        if (elo >= 300)  return { name: 'Gold',      color: '#FFD700', icon: '🥇', min: 300,  next: 700  };
-        if (elo >= 100)  return { name: 'Iron',      color: '#C8C8C8', icon: '⚙️', min: 100,  next: 300  };
-        return              { name: 'Dirt',       color: '#A0714A', icon: '🟫', min: 0,    next: 100  };
+        if (elo >= 2500) return { name: 'Netherite', color: '#9D84CD', icon: '🖤', min: 2500, next: 4000 };
+        if (elo >= 1200) return { name: 'Diamond',   color: '#7BFCFF', icon: '💎', min: 1200, next: 2500 };
+        if (elo >= 500)  return { name: 'Emerald',   color: '#44E880', icon: '💚', min: 500,  next: 1200 };
+        if (elo >= 150)  return { name: 'Gold',      color: '#FFD700', icon: '🥇', min: 150,  next: 500  };
+        if (elo >= 0)    return { name: 'Iron',      color: '#C8C8C8', icon: '⚙️', min: 0,    next: 150  };
+        return              { name: 'Dirt',       color: '#A0714A', icon: '🟫', min: -100, next: 0    };
     }
 
     function getSortedPlayers() {
@@ -537,13 +537,13 @@ document.addEventListener('DOMContentLoaded', () => {
         container.parentNode.appendChild(btn);
 
         // Render Elo Progression Line Graph from server-side history
-        const historyLogs = [...(player.elo_logs || [])].reverse();
-        let currElo = calculateElo(player);
-        const historyData = [currElo]; 
+        const historyLogs = [...(player.elo_logs || [])].reverse(); // Oldest first
+        let runningTotal = 0;
+        const historyData = [runningTotal]; 
         
         for (let i = 0; i < historyLogs.length; i++) {
-            currElo = currElo - historyLogs[i].change;
-            historyData.unshift(currElo);
+            runningTotal += historyLogs[i].change;
+            historyData.push(runningTotal);
         }
         if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
         
