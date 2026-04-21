@@ -44,6 +44,10 @@
                     <i class="fa-solid fa-circle-question"></i>
                     <span>FAQ / Guide</span>
                 </div>
+                <div class="nav-item" id="nav-updates">
+                    <i class="fa-solid fa-newspaper"></i>
+                    <span>Updates</span>
+                </div>
             </nav>
 
             <div class="server-status-card">
@@ -234,6 +238,19 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Updates / Blog Section -->
+                <section id="updates-section" style="display: none;">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <h2>Patch Notes & Announcements</h2>
+                            <p>Keep up with the latest QuartzSMP news and telemetry updates.</p>
+                        </div>
+                    </div>
+                    <div class="blog-feed" id="blog-feed">
+                        <!-- Blog posts injected here -->
+                    </div>
+                </section>
             </div>
         </main>
 
@@ -287,6 +304,17 @@
         </div>
     </div>
 
-    <script src="app.js?v=39"></script>
+    <!-- Blog Reader Overlay -->
+    <div class="blog-reader-overlay" id="blog-reader-overlay">
+        <div class="blog-reader-content" id="blog-reader-content">
+            <button class="close-reader" onclick="closeBlogReader()"><i class="fa-solid fa-arrow-left"></i> Back to Updates</button>
+            
+            <div id="blog-article-content">
+                <!-- Detailed article content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=42"></script>
 </body>
 </html>
