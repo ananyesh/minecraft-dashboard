@@ -27,15 +27,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // View Sections
     const playersSection = document.getElementById('players-section');
     const healthSection = document.getElementById('health-section');
+    const updatesSection = document.getElementById('updates-section');
+    const faqSection = document.getElementById('faq-section');
     
     // Health UI
     const hTPS = document.getElementById('h-tps');
     const hMSPT = document.getElementById('h-mspt');
 
-    // Nav
     const navPlayers = document.getElementById('nav-players');
     const navLeaderboards = document.getElementById('nav-leaderboards');
     const navHealth = document.getElementById('nav-health');
+    const navUpdates = document.getElementById('nav-updates');
+    const navFaq = document.getElementById('nav-faq');
+
+    // News / Blog Data
+    const updates = [
+        {
+            date: "April 21, 2026",
+            version: "v1.3",
+            author: "ToastedToast",
+            handle: "@toasteddotdev",
+            avatar: "https://i.imgur.com/8QpX0p6.png", // Placeholder avatar
+            title: "The Authoritative ELO Update",
+            desc: "A massive core engine migration. The dashboard now uses authoritative server-side ELO math, eliminating sync discrepancies.",
+            features: ["Synchronized Score Repair", "Server-Side ELO Engine", "Ghost Player Protection"],
+            content: `
+                <h2>The Stabilization of QuartzSMP</h2>
+                <p>This may come as a shock to many of you, but the ELO system wasn't actually "stable" this entire time. It was technically "in development". That changes today. Introducing: <code>Authoritative ELO v1.3</code>.</p>
+                <p>We've heard complaints that ELO gains were disappearing or "resetting" after a server restart. This was due to a <strong>race condition</strong> between the playtime tracker and the PvP engine. We have now unified the persistence layer.</p>
+                
+                <h2>Authoritative Logic</h2>
+                <p>Quartz isn't just a tracking bot anymore. It's about tracking and analyzing statistics accurately. The new engine performs all calculations on the server, ensuring that what you see on the dashboard is the 100% truth.</p>
+                
+                <h2>Manual Repair Tools</h2>
+                <p>We've added the <code>/elo repair</code> command for administrators. This tool scans your entire history and reconstructs your score if it ever drifts from the truth.</p>
+            `
+        },
+        {
+            date: "April 20, 2026",
+            version: "v1.2",
+            author: "QuartzEngine",
+            handle: "@quartz_smp",
+            avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
+            title: "Competitive Visual Overhaul",
+            desc: "New high-fidelity tracking features for competitive players, including rank-based progress bars.",
+            features: ["Mini Rank Bars", "Top 3 Podium Highlighting"],
+            content: `
+                <h2>Website Overhaul</h2>
+                <p>The website has now been overhauled to have <strong>high-fidelity visual cues</strong> for your rank progression. If you're reading this, that means you must be on the new site. In which case, hello there!</p>
+                <h2>Rank Progress Bars</h2>
+                <p>We've added mini-bars to every row. These bars show precisely how close you are to your next major rank (Iron, Gold, etc.).</p>
+            `
+        }
+    ];
+
+    const blogReader = document.getElementById('blog-reader-overlay');
+    const articleContainer = document.getElementById('blog-article-content');
 
     /**
      * Data Sync
@@ -88,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTab === 'players') renderPlayersGrid();
         else if (currentTab === 'leaderboard') renderLeaderboard();
         else if (currentTab === 'faq') renderFaq();
+        else if (currentTab === 'updates') renderUpdates();
         
         renderHealthStatus();
         renderTripleGraphs();
@@ -583,28 +631,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderFaq() {} // FAQ is static HTML, no JS rendering needed
 
+    function renderUpdates() {
+        const feed = document.getElementById('blog-feed');
+        if (!feed) return;
+        feed.innerHTML = updates.map((u, i) => `
+            <div class="update-card" onclick="openBlogReader(${i})" style="animation: fadeIn 0.4s ease forwards; cursor: pointer;">
+                <span class="update-date">${u.date}</span>
+                <h3 class="update-title">${u.title} <span class="update-version">${u.version}</span></h3>
+                <p class="update-desc">${u.desc}</p>
+                <div class="update-features">
+                    ${u.features.map(f => `<span class="u-feat">${f}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window.openBlogReader = function(index) {
+        const post = updates[index];
+        if (!post) return;
+        
+        // Generate Table of Contents from h2 tags
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = post.content;
+        const headings = Array.from(tempDiv.querySelectorAll('h2')).map(h => h.innerText);
+        
+        articleContainer.innerHTML = `
+            <header class="article-header">
+                <span class="update-date">${post.date}</span>
+                <h1 class="article-title">${post.title}</h1>
+                
+                <div class="author-block">
+                    <img src="${post.avatar}" class="author-avatar" alt="${post.author}">
+                    <div class="author-info">
+                        <span class="author-name">${post.author}</span>
+                        <span class="author-handle">${post.handle}</span>
+                    </div>
+                </div>
+
+                <div class="toc-card" id="toc-card">
+                    <div class="toc-header" onclick="document.getElementById('toc-list').classList.toggle('hide')">
+                        <span>Table of Contents</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                    <div class="toc-content hide" id="toc-list">
+                        ${headings.map(h => `<a href="#" class="toc-link" onclick="event.preventDefault(); document.getElementById('blog-reader-overlay').scrollTo({top:0, behavior:'smooth'})">${h}</a>`).join('')}
+                    </div>
+                </div>
+            </header>
+            
+            <div class="article-body">
+                ${post.content}
+            </div>
+        `;
+        
+        blogReader.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeBlogReader = function() {
+        blogReader.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    };
+
     function switchTab(tab) {
         currentTab = tab;
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         playersSection.style.display = 'none';
         healthSection.style.display = 'none';
-        document.getElementById('faq-section').style.display = 'none';
+        faqSection.style.display = 'none';
+        updatesSection.style.display = 'none';
 
         if (tab === 'players') {
             navPlayers.classList.add('active'); 
             playersSection.style.display = 'block'; 
-            playerGrid.className = 'player-grid'; // Reset to grid
+            playerGrid.className = 'player-grid'; 
         } else if (tab === 'leaderboard') {
             navLeaderboards.classList.add('active'); 
             playersSection.style.display = 'block'; 
-            // In list mode, renderLeaderboard handles the class
         } else if (tab === 'health') {
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
             setTimeout(renderTripleGraphs, 100);
         } else if (tab === 'faq') {
-            document.getElementById('nav-faq').classList.add('active');
-            document.getElementById('faq-section').style.display = 'block';
+            navFaq.classList.add('active');
+            faqSection.style.display = 'block';
+        } else if (tab === 'updates') {
+            navUpdates.classList.add('active');
+            updatesSection.style.display = 'block';
         }
         renderAll();
     }
@@ -612,7 +725,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navPlayers.addEventListener('click', () => switchTab('players'));
     navLeaderboards.addEventListener('click', () => switchTab('leaderboard'));
     navHealth.addEventListener('click', () => switchTab('health'));
-    document.getElementById('nav-faq').addEventListener('click', () => switchTab('faq'));
+    navUpdates.addEventListener('click', () => switchTab('updates'));
+    navFaq.addEventListener('click', () => switchTab('faq'));
     closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
