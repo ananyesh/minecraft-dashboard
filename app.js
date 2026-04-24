@@ -470,138 +470,149 @@ document.addEventListener('DOMContentLoaded', () => {
         const player = players.find(p => p.uuid === uuid);
         if (!player) return;
         selectedPlayer = player;
-        updateDetailPanel(player);
+        window.updateDetailPanel(player);
         detailsPanel.classList.add('open');
     };
 
-    function updateDetailPanel(player) {
-        document.getElementById('detail-username').textContent = player.username;
-        const skinIdentity = player.skin || player.username;
-        document.getElementById('detail-avatar-body').src = `https://mc-heads.net/body/${skinIdentity}/160`;
-
-        const stats = player.stats || {};
-        const custom = stats['minecraft:custom'] || {};
-        const container = document.getElementById('general-stats-container');
-        
-        const kills = custom['PLAYER_KILLS'] || 0, deaths = custom['DEATHS'] || 0, mobs = custom['MOB_KILLS'] || 0;
-        const mined = stats.total_mined || 0, placed = stats.total_placed || 0;
-        const kd = (kills / Math.max(1, deaths)).toFixed(2);
-        const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
-
-        const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
-        const uuid = player.uuid;
-
-        const energy = player.energy || 0;
-        const eClass = energy === 0 ? "energy-dead" : "";
-        const eInten = Math.min(10, energy) / 10;
-
-        let gridHtml = `
-            <div class="stat-card energy-detail-card ${eClass}" style="--intensity: ${eInten};"><span class="stat-label"><i class="fa-solid fa-bolt"></i> Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
-            <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
-            <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
-            <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
-            <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value" data-count="${kd}" data-stat-key="${uuid}_kd">${kd}</span></div>
-            <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value" data-count="${mined}" data-stat-key="${uuid}_mined">${mined}</span></div>
-            <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value" data-count="${placed}" data-stat-key="${uuid}_placed">${placed}</span></div>
-            <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}" data-stat-key="${uuid}_mobs">${mobs}</span></div>
-            <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}" data-stat-key="${uuid}_damage">${damage}</span></div>`;
-
-        const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED', 'DAMAGE_DEALT'];
-        Object.entries(custom).forEach(([key, val]) => {
-            if (!featured.includes(key)) {
-                let numVal = typeof val === 'number' ? val : parseFloat(val);
-                let label = formatName(key);
-                
-                // Convert CM to M
-                if (key.endsWith('_ONE_CM')) {
-                    numVal = (numVal / 100).toFixed(1);
-                    label = label.replace(' One Cm', '') + ' (m)';
-                }
-
-                if (!isNaN(numVal)) {
-                    gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value" data-count="${numVal}" data-stat-key="${uuid}_${key}">${numVal}</span></div>`;
-                } else {
-                    gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value">${val}</span></div>`;
-                }
-            }
-        });
-        container.innerHTML = gridHtml;
-        
-        let existingBtn = document.getElementById('btn-kill-logs');
-        if (existingBtn) existingBtn.remove();
-        let btn = document.createElement('button');
-        btn.id = 'btn-kill-logs';
-        btn.className = 'app-btn';
-        btn.innerHTML = '<i class="fa-solid fa-scroll"></i> View Elo History';
-        btn.onclick = () => openKillLogsModal(uuid);
-        container.parentNode.appendChild(btn);
-
-        // Render Elo & Rank Trajectories
-        const historyLogs = [...(player.elo_logs || [])].reverse(); 
-        let runningTotal = 0;
-        const historyData = [runningTotal]; 
-        const rankHistory = [];
-        
-        for (let i = 0; i < historyLogs.length; i++) {
-            const parts = historyLogs[i].split(':');
-            const change = parseInt(parts[2] || 0);
-            const rk = parseInt(parts[4] || 0);
+    window.updateDetailPanel = (player) => {
+        try {
+            const usernameEl = document.getElementById('detail-username');
+            if (usernameEl) usernameEl.textContent = player.username || "Unknown";
             
-            runningTotal += change;
-            historyData.push(runningTotal);
-            if (rk > 0) rankHistory.push(rk);
-        }
-        if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
-        
-        const svgElo = document.getElementById('svg-elo-progression');
-        if (svgElo) {
-            svgElo.innerHTML = '';
-            svgElo.setAttribute('viewBox', `0 0 1000 100`);
-            const maxVal = Math.max(...historyData) + 20;
-            const minVal = Math.max(0, Math.min(...historyData) - 10);
-            const range = maxVal - minVal || 1;
-            const stepX = 1000 / (historyData.length - 1);
-            const getY = (val) => 100 - (((val - minVal) / range) * 80 + 10); 
-
-            const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
-            const curve = getBezierCurve(pts);
-            svgElo.innerHTML = `
-                <defs><linearGradient id="gElo" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--primary)" stop-opacity="0" /></linearGradient></defs>
-                <path d="${curve} L 1000,100 L 0,100 Z" fill="url(#gElo)" stroke="none"></path>
-                <path d="${curve}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"></path>
-                ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
-            `;
-        }
-
-        const svgRank = document.getElementById('svg-rank-progression');
-        if (svgRank) {
-            svgRank.innerHTML = '';
-            if (rankHistory.length < 2) {
-                svgRank.innerHTML = '<text x="500" y="55" fill="var(--text-muted)" text-anchor="middle" font-size="24" font-weight="bold">RANK RECORDING IN PROGRESS</text>';
-            } else {
-                svgRank.setAttribute('viewBox', `0 0 1000 100`);
-                const maxR = Math.max(...rankHistory) + 2;
-                const minR = 1;
-                const rRange = maxR - minR || 1;
-                const rStepX = 1000 / (rankHistory.length - 1);
-                const getRY = (val) => ((val - minR) / rRange) * 80 + 10; 
-
-                const rPts = rankHistory.map((r, i) => ({ x: i * rStepX, y: getRY(r) }));
-                const rCurve = getBezierCurve(rPts);
-                svgRank.innerHTML = `
-                    <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
-                    ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
-                `;
+            const avatarEl = document.getElementById('detail-avatar-body');
+            if (avatarEl) {
+                const skinIdentity = player.skin || player.username || "steve";
+                avatarEl.src = `https://mc-heads.net/body/${skinIdentity}/160`;
             }
+
+            const stats = player.stats || {};
+            const custom = stats['minecraft:custom'] || {};
+            const container = document.getElementById('general-stats-container');
+            
+            if (container) {
+                const kills = custom['PLAYER_KILLS'] || 0, deaths = custom['DEATHS'] || 0, mobs = custom['MOB_KILLS'] || 0;
+                const mined = stats.total_mined || 0, placed = stats.total_placed || 0;
+                const kd = (kills / Math.max(1, deaths)).toFixed(2);
+                const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
+                const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
+                const uuid = player.uuid;
+                const energy = player.energy || 0;
+                const eClass = energy === 0 ? "energy-dead" : "";
+                const eInten = Math.min(10, energy) / 10;
+
+                let gridHtml = `
+                    <div class="stat-card energy-detail-card ${eClass}" style="--intensity: ${eInten};"><span class="stat-label"><i class="fa-solid fa-bolt"></i> Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
+                    <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
+                    <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
+                    <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
+                    <div class="stat-card"><span class="stat-label">K/D</span><span class="stat-value" data-count="${kd}" data-stat-key="${uuid}_kd">${kd}</span></div>
+                    <div class="stat-card"><span class="stat-label">Mined</span><span class="stat-value" data-count="${mined}" data-stat-key="${uuid}_mined">${mined}</span></div>
+                    <div class="stat-card"><span class="stat-label">Placed</span><span class="stat-value" data-count="${placed}" data-stat-key="${uuid}_placed">${placed}</span></div>
+                    <div class="stat-card"><span class="stat-label">Mob Kills</span><span class="stat-value" data-count="${mobs}" data-stat-key="${uuid}_mobs">${mobs}</span></div>
+                    <div class="stat-card"><span class="stat-label">Damage Dealt</span><span class="stat-value" data-count="${damage}" data-stat-key="${uuid}_damage">${damage}</span></div>`;
+
+                const featured = ['PLAY_ONE_MINUTE', 'DEATHS', 'PLAYER_KILLS', 'MOB_KILLS', 'TOTAL_MINED', 'TOTAL_PLACED', 'DAMAGE_DEALT'];
+                Object.entries(custom).forEach(([key, val]) => {
+                    if (!featured.includes(key)) {
+                        let numVal = typeof val === 'number' ? val : parseFloat(val);
+                        let label = formatName(key);
+                        if (key.endsWith('_ONE_CM')) {
+                            numVal = (numVal / 100).toFixed(1);
+                            label = label.replace(' One Cm', '') + ' (m)';
+                        }
+                        if (!isNaN(numVal)) {
+                            gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value" data-count="${numVal}" data-stat-key="${uuid}_${key}">${numVal}</span></div>`;
+                        } else {
+                            gridHtml += `<div class="stat-card"><span class="stat-label">${label}</span><span class="stat-value">${val}</span></div>`;
+                        }
+                    }
+                });
+                container.innerHTML = gridHtml;
+
+                let existingBtn = document.getElementById('btn-kill-logs');
+                if (existingBtn) existingBtn.remove();
+                let btn = document.createElement('button');
+                btn.id = 'btn-kill-logs';
+                btn.className = 'app-btn';
+                btn.innerHTML = '<i class="fa-solid fa-scroll"></i> View Elo History';
+                btn.onclick = () => openKillLogsModal(uuid);
+                container.parentNode.appendChild(btn);
+            }
+
+            // Render Elo Trajectory
+            const svgElo = document.getElementById('svg-elo-progression');
+            if (svgElo) {
+                svgElo.innerHTML = '';
+                const historyLogs = [...(player.elo_logs || [])].reverse(); 
+                let runningTotal = 0;
+                const historyData = [runningTotal]; 
+                const rankHistory = [];
+                
+                for (let i = 0; i < historyLogs.length; i++) {
+                    try {
+                        const parts = historyLogs[i].split(':');
+                        const change = parseInt(parts[2] || 0);
+                        const rk = parseInt(parts[4] || 0);
+                        runningTotal += change;
+                        historyData.push(runningTotal);
+                        if (rk > 0) rankHistory.push(rk);
+                    } catch(e) {}
+                }
+                
+                if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
+                
+                svgElo.setAttribute('viewBox', `0 0 1000 100`);
+                const maxVal = Math.max(...historyData) + 20;
+                const minVal = Math.max(0, Math.min(...historyData) - 10);
+                const range = maxVal - minVal || 1;
+                const stepX = 1000 / (historyData.length - 1);
+                const getY = (val) => 100 - (((val - minVal) / range) * 80 + 10); 
+                const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
+                const curve = getBezierCurve(pts);
+                
+                svgElo.innerHTML = `
+                    <defs><linearGradient id="gElo" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--primary)" stop-opacity="0" /></linearGradient></defs>
+                    <path d="${curve} L 1000,100 L 0,100 Z" fill="url(#gElo)" stroke="none"></path>
+                    <path d="${curve}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"></path>
+                    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                `;
+
+                const svgRank = document.getElementById('svg-rank-progression');
+                if (svgRank) {
+                    svgRank.innerHTML = '';
+                    if (rankHistory.length < 2) {
+                        svgRank.innerHTML = '<text x="500" y="55" fill="var(--text-muted)" text-anchor="middle" font-size="24" font-weight="bold">RANK RECORDING IN PROGRESS</text>';
+                    } else {
+                        svgRank.setAttribute('viewBox', `0 0 1000 100`);
+                        const maxR = Math.max(...rankHistory) + 2;
+                        const minR = 1;
+                        const rRange = maxR - minR || 1;
+                        const rStepX = 1000 / (rankHistory.length - 1);
+                        const getRY = (val) => ((val - minR) / rRange) * 80 + 10; 
+                        const rPts = rankHistory.map((r, i) => ({ x: i * rStepX, y: getRY(r) }));
+                        const rCurve = getBezierCurve(rPts);
+                        svgRank.innerHTML = `
+                            <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
+                            ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                        `;
+                    }
+                }
+            }
+            
+            const miningGraph = document.getElementById('mining-graph');
+            const combatGraph = document.getElementById('combat-graph');
+            if (miningGraph) renderStatChart(miningGraph, stats['minecraft:mined'] || {}, 'bar-stone');
+            if (combatGraph) renderStatChart(combatGraph, stats['minecraft:killed'] || {}, 'bar-emerald');
+            
+            if (container) animateCounters(container);
+        } catch (err) {
+            console.error("Critical error in updateDetailPanel:", err);
         }
-        
-        animateCounters(container);
-        renderStatChart(document.getElementById('mining-graph'), stats['minecraft:mined'] || {}, 'bar-stone');
-        renderStatChart(document.getElementById('combat-graph'), stats['minecraft:killed'] || {}, 'bar-emerald');
     }
 
     function getBezierCurve(pts) {
-        if (pts.length < 2) return `M ${pts[0].x},${pts[0].y}`;
+        if (!pts || pts.length === 0) return "";
+        if (pts.length === 1) return `M ${pts[0].x},${pts[0].y}`;
         let d = `M ${pts[0].x},${pts[0].y}`;
         for (let i = 0; i < pts.length - 1; i++) {
             const p0 = pts[i];
