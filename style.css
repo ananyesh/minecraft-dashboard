@@ -1,11 +1,11 @@
 :root {
-    /* Quartz Palette */
+    /* Abyss Theme (Default) */
     --bg-dark: #050507;
     --sidebar-bg: #0c0c0e;
     --card-bg: rgba(255, 255, 255, 0.02);
     --card-border: rgba(255, 255, 255, 0.08);
-    --primary: #ffffff;
-    --primary-glow: rgba(255, 255, 255, 0.15);
+    --primary: #4ade80;
+    --primary-glow: rgba(74, 222, 128, 0.2);
     --secondary: #a1a1aa;
     --accent: #e2e8f0;
     --text-main: #f8fafc;
@@ -15,11 +15,38 @@
     --tps-color: #22c55e;
     --mspt-color: #f59e0b;
     --player-color: #ffffff;
-
-    /* Effects */
     --glass: blur(16px);
     --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.9);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.theme-quartz {
+    --bg-dark: #f8fafc;
+    --sidebar-bg: #ffffff;
+    --card-bg: rgba(15, 23, 42, 0.03);
+    --card-border: rgba(15, 23, 42, 0.08);
+    --primary: #3b82f6;
+    --primary-glow: rgba(59, 130, 246, 0.15);
+    --secondary: #64748b;
+    --accent: #1e293b;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --glass: blur(10px);
+    --shadow-premium: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+body.theme-crimson {
+    --bg-dark: #0a0505;
+    --sidebar-bg: #120808;
+    --card-bg: rgba(239, 68, 68, 0.05);
+    --card-border: rgba(239, 68, 68, 0.15);
+    --primary: #ef4444;
+    --primary-glow: rgba(239, 68, 68, 0.25);
+    --secondary: #991b1b;
+    --accent: #fecaca;
+    --text-main: #fee2e2;
+    --text-muted: #7f1d1d;
+    --shadow-premium: 0 20px 50px rgba(0, 0, 0, 0.95);
 }
 
 * {
@@ -59,7 +86,13 @@ body {
     z-index: 10;
 }
 
-.logo { display: flex; align-items: center; gap: 14px; margin-bottom: 48px; }
+/* Theme Switcher */
+.theme-switcher { display: flex; gap: 8px; margin-bottom: 24px; padding: 4px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--card-border); }
+.theme-btn { width: 100%; height: 32px; border: none; border-radius: 8px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; font-size: 14px; background: transparent; color: var(--text-muted); }
+.theme-btn:hover { background: var(--card-bg); color: var(--text-main); }
+.theme-btn.active { background: var(--primary); color: #000; box-shadow: 0 0 10px var(--primary-glow); }
+
+.logo { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
 .logo-icon { font-size: 28px; filter: drop-shadow(0 0 10px var(--primary-glow)); }
 .logo-text { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
 .logo-text span { color: var(--secondary); font-weight: 400; }
