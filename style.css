@@ -779,10 +779,11 @@ select#sort-by option {
 .chart-container:hover .chart-crosshair { opacity: 1; }
 
 .chart-slice {
-    fill: transparent;
+    fill: transparent !important;
+    stroke: none !important;
     cursor: crosshair;
 }
-.chart-slice:hover { fill: rgba(255, 255, 255, 0.03); }
+.chart-slice:hover { fill: rgba(255, 255, 255, 0.05) !important; }
 
 #svg-elo-progression circle, #svg-rank-progression circle {
     pointer-events: none; /* Make circles non-blocking, handled by slices */
