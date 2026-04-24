@@ -711,11 +711,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
                 const curve = getBezierCurve(pts);
                 
+                // Helper to render interactive slices
+                const renderSlices = (pList, dataArr, unit, cId) => pList.map((p, i) => {
+                    const w = 1000 / pList.length;
+                    return `<rect class="chart-slice" x="${p.x - w/2}" y="0" width="${w}" height="100" 
+                        onmouseenter="handleChartHover(event, '${cId}', '${dataArr[i]} ${unit}', ${p.x})" 
+                        onmouseleave="hideChartHover('${cId}')"></rect>`;
+                }).join('');
+
                 svgElo.innerHTML = `
                     <defs><linearGradient id="gElo" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--primary)" stop-opacity="0" /></linearGradient></defs>
                     <path d="${curve} L 1000,100 L 0,100 Z" fill="url(#gElo)" stroke="none"></path>
                     <path d="${curve}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"></path>
-                    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                    ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2"></circle>`).join('')}
+                    ${renderSlices(pts, historyData.map(Math.round), 'ELO', 'crosshair-elo')}
                 `;
 
                 const svgRank = document.getElementById('svg-rank-progression');
@@ -731,7 +740,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rCurve = getBezierCurve(rPts);
                     svgRank.innerHTML = `
                         <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
-                        ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                        ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5"></circle>`).join('')}
+                        ${renderSlices(rPts, rankHistory.map(r => 'Rank #' + r), '', 'crosshair-rank')}
                     `;
                 }
             }
@@ -1063,4 +1073,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setTheme(savedTheme);
     updateAllData();
     setInterval(updateAllData, 30000);
+    window.handleChartHover = function(e, crosshairId, text, svgX) {
+        const crosshair = document.getElementById(crosshairId);
+        if (crosshair) {
+            const container = crosshair.parentElement;
+            const rect = container.getBoundingClientRect();
+            // Convert SVG 1000 coordinate back to pixel percentage
+            const pct = (svgX / 1000) * 100;
+            crosshair.style.left = `${pct}%`;
+        }
+        showEloTooltip(e, text);
+    };
+
+    window.hideChartHover = function(crosshairId) {
+        hideEloTooltip();
+    };
 });
