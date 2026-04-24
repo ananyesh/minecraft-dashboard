@@ -847,6 +847,12 @@ select#sort-by option {
 .toast.loss { border-left-color: #ef4444; }
 .toast.loss .toast-icon { color: #ef4444; }
 
+/* Rank Specific Toasts */
+.toast.rank-up { border-left-color: #f59e0b; background: rgba(30, 25, 10, 0.9); }
+.toast.rank-up .toast-icon { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+.toast.rank-down { border-left-color: #8b5cf6; background: rgba(25, 20, 35, 0.9); }
+.toast.rank-down .toast-icon { color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
+
 /* Dashboard Ticker / Sidebar Widget */
 .live-activity-widget {
     margin-top: 24px;
