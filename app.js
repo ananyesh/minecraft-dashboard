@@ -536,69 +536,63 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.onclick = () => openKillLogsModal(uuid);
         container.parentNode.appendChild(btn);
 
-        // Render Elo Progression Line Graph from server-side history
-        // Render Elo Progression Line Graph from server-side history
+        // Render Elo & Rank Trajectories
         const historyLogs = [...(player.elo_logs || [])].reverse(); 
         let runningTotal = 0;
         const historyData = [runningTotal]; 
+        const rankHistory = [];
         
         for (let i = 0; i < historyLogs.length; i++) {
-            runningTotal += historyLogs[i].change;
+            const parts = historyLogs[i].split(':');
+            const change = parseInt(parts[2] || 0);
+            const rk = parseInt(parts[4] || 0);
+            
+            runningTotal += change;
             historyData.push(runningTotal);
+            if (rk > 0) rankHistory.push(rk);
         }
         if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
         
-        const svg = document.getElementById('svg-elo-progression');
-        if (svg) {
-            svg.innerHTML = '';
-            svg.setAttribute('viewBox', `0 0 1000 100`);
-            
+        const svgElo = document.getElementById('svg-elo-progression');
+        if (svgElo) {
+            svgElo.innerHTML = '';
+            svgElo.setAttribute('viewBox', `0 0 1000 100`);
             const maxVal = Math.max(...historyData) + 20;
             const minVal = Math.max(0, Math.min(...historyData) - 10);
             const range = maxVal - minVal || 1;
             const stepX = 1000 / (historyData.length - 1);
             const getY = (val) => 100 - (((val - minVal) / range) * 80 + 10); 
 
-            // 1. Draw Rank Tier Markers (Background Grid)
-            const ranks = [
-                { val: 0, label: 'Iron' },
-                { val: 150, label: 'Gold' },
-                { val: 500, label: 'Emerald' },
-                { val: 1200, label: 'Diamond' },
-                { val: 2500, label: 'Netherite' }
-            ];
-            
-            let gridHtml = '';
-            ranks.forEach(r => {
-                const y = getY(r.val);
-                if (y > 0 && y < 100) {
-                    gridHtml += `
-                        <line x1="0" y1="${y}" x2="1000" y2="${y}" class="graph-rank-marker"></line>
-                        <text x="5" y="${y - 4}" class="graph-label-text">${r.label}</text>
-                    `;
-                }
-            });
-
-            // 2. Calculate smooth Bezier path
             const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
-            const curvePath = getBezierCurve(pts);
-            const areaPath = `${curvePath} L 1000,100 L 0,100 Z`;
-
-            svg.innerHTML = `
-                <defs>
-                    <linearGradient id="eloAreaGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#4ade80" stop-opacity="0.3" />
-                        <stop offset="100%" stop-color="#4ade80" stop-opacity="0.0" />
-                    </linearGradient>
-                </defs>
-                ${gridHtml}
-                <path d="${areaPath}" fill="url(#eloAreaGlow)" stroke="none"></path>
-                <path d="${curvePath}" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-                ${pts.map((p, i) => `
-                    <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#111" stroke="#4ade80" stroke-width="2" pointer-events="none"></circle>
-                    <circle cx="${p.x}" cy="${p.y}" r="20" fill="transparent" stroke="transparent" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" style="cursor:crosshair;"></circle>
-                `).join('')}
+            const curve = getBezierCurve(pts);
+            svgElo.innerHTML = `
+                <defs><linearGradient id="gElo" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="var(--primary)" stop-opacity="0.3" /><stop offset="100%" stop-color="var(--primary)" stop-opacity="0" /></linearGradient></defs>
+                <path d="${curve} L 1000,100 L 0,100 Z" fill="url(#gElo)" stroke="none"></path>
+                <path d="${curve}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"></path>
+                ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
             `;
+        }
+
+        const svgRank = document.getElementById('svg-rank-progression');
+        if (svgRank) {
+            svgRank.innerHTML = '';
+            if (rankHistory.length < 2) {
+                svgRank.innerHTML = '<text x="500" y="55" fill="var(--text-muted)" text-anchor="middle" font-size="24" font-weight="bold">RANK RECORDING IN PROGRESS</text>';
+            } else {
+                svgRank.setAttribute('viewBox', `0 0 1000 100`);
+                const maxR = Math.max(...rankHistory) + 2;
+                const minR = 1;
+                const rRange = maxR - minR || 1;
+                const rStepX = 1000 / (rankHistory.length - 1);
+                const getRY = (val) => ((val - minR) / rRange) * 80 + 10; 
+
+                const rPts = rankHistory.map((r, i) => ({ x: i * rStepX, y: getRY(r) }));
+                const rCurve = getBezierCurve(rPts);
+                svgRank.innerHTML = `
+                    <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
+                    ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                `;
+            }
         }
         
         animateCounters(container);
@@ -901,6 +895,24 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Theme Switcher Logic
+    const themeBtns = document.querySelectorAll('.theme-btn');
+    const savedTheme = localStorage.getItem('quartz-theme') || 'abyss';
+    
+    function setTheme(theme) {
+        document.body.className = theme === 'abyss' ? '' : `theme-${theme}`;
+        themeBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.theme === theme);
+        });
+        localStorage.setItem('quartz-theme', theme);
+        renderAll(); // Re-render to update graph colors
+    }
+
+    themeBtns.forEach(btn => {
+        btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    });
+
+    setTheme(savedTheme);
     updateAllData();
     setInterval(updateAllData, 30000);
 });
