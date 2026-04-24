@@ -44,6 +44,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const updates = [
         {
             date: "April 24, 2026",
+            version: "v1.6",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Competitive Broadcast System",
+            desc: "Real-time global notifications for ELO fluctuations and Rank milestones.",
+            features: ["Live Activity Ticker", "Rank Promotion Toasts", "Global Event Feed", "Real-time Sync"],
+            content: `
+                <h2>The World is Watching</h2>
+                <p>We've introduced a state-of-the-art <strong>Live Broadcast</strong> system. Every ELO gain, loss, and major rank change is now broadcasted in real-time across the dashboard.</p>
+                
+                <h2>Global Event Feed</h2>
+                <p>Check the new <strong>Live Activity</strong> widget in the sidebar. It tracks the last 20 server-wide events, providing a chronological history of the server's competitive landscape.</p>
+
+                <h2>Rank Milestones</h2>
+                <p>When a player ascends to a new rank (e.g. from Iron to Gold), a special <strong>Gold Trophy Toast</strong> will appear for all users. Competitive milestones have never felt this premium.</p>
+            `
+        },
+        {
+            date: "April 24, 2026",
             version: "v1.5",
             author: "ananyesh",
             handle: "@ananyesh",
@@ -212,19 +232,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('toast-container');
         if (!container) return;
 
-        const isGain = log.change >= 0;
+        const isRank = log.type === 'PROMOTED' || log.type === 'DEMOTED';
+        const isGain = log.change >= 0 || log.type === 'PROMOTED';
+        
+        let toastClass = isGain ? 'gain' : 'loss';
+        if (log.type === 'PROMOTED') toastClass = 'rank-up';
+        if (log.type === 'DEMOTED') toastClass = 'rank-down';
+
+        let iconClass = 'fa-arrow-trend-up';
+        if (log.type === 'PROMOTED') iconClass = 'fa-trophy';
+        if (log.type === 'DEMOTED') iconClass = 'fa-angle-double-down';
+        if (!isGain && !isRank) iconClass = 'fa-arrow-trend-down';
+
         const toast = document.createElement('div');
-        toast.className = `toast ${isGain ? 'gain' : 'loss'}`;
+        toast.className = `toast ${toastClass}`;
         
         toast.innerHTML = `
             <div class="toast-icon">
-                <i class="fa-solid ${isGain ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
+                <i class="fa-solid ${iconClass}"></i>
             </div>
             <div class="toast-content">
                 <div class="toast-title">
                     ${log.user}
                     <span style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted)">
-                        (${isGain ? '+' : ''}${log.change})
+                        ${isRank ? (log.type === 'PROMOTED' ? 'RANK UP!' : 'RANK DOWN') : `(${isGain ? '+' : ''}${log.change})`}
                     </span>
                 </div>
                 <div class="toast-msg">${log.type}: ${log.details}</div>
