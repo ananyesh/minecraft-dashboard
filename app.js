@@ -140,10 +140,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pData = await pRes.value.json();
                 const rawPlayers = pData ? Object.values(pData).filter(p => p && p.username) : [];
                 const deduped = {};
+                const now = Math.floor(Date.now() / 1000);
+
                 rawPlayers.forEach(p => {
                     const name = p.username.toLowerCase();
                     const existing = deduped[name];
-                    if (!existing || (p.online && !existing.online) || (p.stats?.total_mined > (existing.stats?.total_mined || 0))) {
+                    
+                    // Ghost Protection: If online but haven't been seen in > 10 mins, force offline
+                    if (p.online && p.last_seen && (now - p.last_seen > 600)) {
+                        p.online = false;
+                    }
+
+                    // Deduplication Logic: Favor latest last_seen
+                    if (!existing || (p.last_seen || 0) > (existing.last_seen || 0)) {
                         deduped[name] = p;
                     }
                 });
