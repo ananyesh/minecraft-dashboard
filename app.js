@@ -43,6 +43,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // News / Blog Data
     const updates = [
         {
+            date: "April 24, 2026",
+            version: "v1.5",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Adaptive Telemetry & Theme Engine",
+            desc: "Visual overhaul with new multi-theme support (Abyss, Quartz, Crimson) and corrected historical telemetry curves.",
+            features: ["Dynamic Theme Switcher", "Fixed Trajectory Direction", "Rank Placement Fallbacks", "UI Polish"],
+            content: `
+                <h2>Visual Sovereignty</h2>
+                <p>Choose your style. We've introduced three distinct themes to the dashboard: <strong>Abyss</strong> (Classic), <strong>Quartz</strong> (Light Mode), and <strong>Crimson</strong> (Hardcore Dark Red).</p>
+                
+                <h2>Fixed Telemetry Timeline</h2>
+                <p>We resolved an issue where ELO graphs were displaying inverted timelines. Your graphs now correctly read from left (past) to right (present), anchored to your current score.</p>
+
+                <h2>Leaderboard History</h2>
+                <p>The new Placement graph tracks your rank over time. If you haven't played on the new version yet, we show your current rank as a stable baseline until more snapshots are recorded.</p>
+            `
+        },
+        {
             date: "April 21, 2026",
             version: "v1.4",
             author: "ananyesh",
@@ -543,28 +563,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const svgElo = document.getElementById('svg-elo-progression');
             if (svgElo) {
                 svgElo.innerHTML = '';
-                const historyLogs = [...(player.elo_logs || [])].reverse(); 
-                let runningTotal = 0;
-                const historyData = [runningTotal]; 
+                const currentElo = player.elo || 0;
+                const logs = player.elo_logs || []; // Now Objects from Java
+                let temp = currentElo;
+                const historyData = [temp]; 
                 const rankHistory = [];
                 
-                for (let i = 0; i < historyLogs.length; i++) {
+                // Backtrack from current ELO (logs are latest first from Java)
+                for (let i = 0; i < logs.length; i++) {
                     try {
-                        const parts = historyLogs[i].split(':');
-                        const change = parseInt(parts[2] || 0);
-                        const rk = parseInt(parts[4] || 0);
-                        runningTotal += change;
-                        historyData.push(runningTotal);
-                        if (rk > 0) rankHistory.push(rk);
+                        const log = logs[i];
+                        const change = parseInt(log.change || 0);
+                        const rk = parseInt(log.rank || 0);
+                        temp -= change;
+                        historyData.unshift(temp); 
+                        if (rk > 0) rankHistory.unshift(rk); 
                     } catch(e) {}
                 }
                 
-                if (historyData.length < 2) historyData.unshift(calculateElo(player) - 5, calculateElo(player) - 2); 
+                // Smart fallback for empty history
+                if (historyData.length < 2) {
+                    historyData.unshift(currentElo); 
+                    historyData.unshift(currentElo); 
+                }
+
+                const sortedP = [...players].sort((a, b) => (b.elo || 0) - (a.elo || 0));
+                const currentRank = sortedP.findIndex(p => p.uuid === player.uuid) + 1;
+                
+                // Append current rank to the end of history
+                rankHistory.push(currentRank);
+                
+                // If still empty (legacy logs), make a flat line
+                if (rankHistory.length === 1) {
+                    rankHistory.unshift(currentRank);
+                }
                 
                 svgElo.setAttribute('viewBox', `0 0 1000 100`);
                 const maxVal = Math.max(...historyData) + 20;
-                const minVal = Math.max(0, Math.min(...historyData) - 10);
-                const range = maxVal - minVal || 1;
+                const minVal = Math.min(...historyData) - 10;
+                const range = Math.max(1, maxVal - minVal);
                 const stepX = 1000 / (historyData.length - 1);
                 const getY = (val) => 100 - (((val - minVal) / range) * 80 + 10); 
                 const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
@@ -580,22 +617,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const svgRank = document.getElementById('svg-rank-progression');
                 if (svgRank) {
                     svgRank.innerHTML = '';
-                    if (rankHistory.length < 2) {
-                        svgRank.innerHTML = '<text x="500" y="55" fill="var(--text-muted)" text-anchor="middle" font-size="24" font-weight="bold">RANK RECORDING IN PROGRESS</text>';
-                    } else {
-                        svgRank.setAttribute('viewBox', `0 0 1000 100`);
-                        const maxR = Math.max(...rankHistory) + 2;
-                        const minR = 1;
-                        const rRange = maxR - minR || 1;
-                        const rStepX = 1000 / (rankHistory.length - 1);
-                        const getRY = (val) => ((val - minR) / rRange) * 80 + 10; 
-                        const rPts = rankHistory.map((r, i) => ({ x: i * rStepX, y: getRY(r) }));
-                        const rCurve = getBezierCurve(rPts);
-                        svgRank.innerHTML = `
-                            <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
-                            ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
-                        `;
-                    }
+                    svgRank.setAttribute('viewBox', `0 0 1000 100`);
+                    const maxR = Math.max(...rankHistory) + 2;
+                    const minR = 1;
+                    const rRange = Math.max(1, maxR - minR);
+                    const rStepX = 1000 / (rankHistory.length - 1);
+                    const getRY = (val) => ((val - minR) / rRange) * 80 + 10; 
+                    const rPts = rankHistory.map((r, i) => ({ x: i * rStepX, y: getRY(r) }));
+                    const rCurve = getBezierCurve(rPts);
+                    svgRank.innerHTML = `
+                        <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
+                        ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5" onmouseenter="showEloTooltip(event, 'Rank #${rankHistory[i]}')" onmouseleave="hideEloTooltip()"></circle>`).join('')}
+                    `;
                 }
             }
             
