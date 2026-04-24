@@ -172,12 +172,76 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (hData) playerHistory = Array.isArray(hData) ? hData : [];
                 } catch(e) {}
             }
+
+            // Trigger Live Logs check
+            updateLiveLogs();
         } catch (e) {
             console.error('Quartz Dashboard Sync Error:', e);
         } finally {
             renderAll();
         }
     }
+
+    let lastSeenLogTime = Math.floor(Date.now() / 1000);
+    async function updateLiveLogs() {
+        try {
+            const res = await fetch(baseFirebaseURL + 'server/live_logs.json');
+            const logs = await res.json();
+            if (!logs || !Array.isArray(logs)) return;
+
+            const feed = document.getElementById('live-activity-feed');
+            if (feed) {
+                feed.innerHTML = logs.slice(0, 5).map(log => `
+                    <div class="live-log-item">
+                        <div class="log-user">${log.user}</div>
+                        <div class="log-change ${log.change >= 0 ? 'pos' : 'neg'}">${log.change >= 0 ? '+' : ''}${log.change}</div>
+                    </div>
+                `).join('');
+            }
+
+            // Check for NEW logs to Toast (don't show old logs on load)
+            const newLogs = logs.filter(l => l.time > lastSeenLogTime).reverse();
+            newLogs.forEach(log => {
+                showToast(log);
+                lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
+            });
+        } catch(e) {}
+    }
+
+    function showToast(log) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const isGain = log.change >= 0;
+        const toast = document.createElement('div');
+        toast.className = `toast ${isGain ? 'gain' : 'loss'}`;
+        
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fa-solid ${isGain ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">
+                    ${log.user}
+                    <span style="font-weight: 400; font-size: 0.8rem; color: var(--text-muted)">
+                        (${isGain ? '+' : ''}${log.change})
+                    </span>
+                </div>
+                <div class="toast-msg">${log.type}: ${log.details}</div>
+            </div>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto remove
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 600);
+        }, 5000);
+    }
+
+    // High-frequency poll for Live Logs
+    setInterval(updateLiveLogs, 5000);
 
 
 
