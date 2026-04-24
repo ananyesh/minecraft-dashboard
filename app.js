@@ -537,7 +537,8 @@ document.addEventListener('DOMContentLoaded', () => {
         container.parentNode.appendChild(btn);
 
         // Render Elo Progression Line Graph from server-side history
-        const historyLogs = [...(player.elo_logs || [])].reverse(); // Oldest first
+        // Render Elo Progression Line Graph from server-side history
+        const historyLogs = [...(player.elo_logs || [])].reverse(); 
         let runningTotal = 0;
         const historyData = [runningTotal]; 
         
@@ -551,34 +552,71 @@ document.addEventListener('DOMContentLoaded', () => {
         if (svg) {
             svg.innerHTML = '';
             svg.setAttribute('viewBox', `0 0 1000 100`);
-            const maxVal = Math.max(...historyData) + 15;
-            const minVal = Math.max(0, Math.min(...historyData) - 15);
+            
+            const maxVal = Math.max(...historyData) + 20;
+            const minVal = Math.max(0, Math.min(...historyData) - 10);
             const range = maxVal - minVal || 1;
             const stepX = 1000 / (historyData.length - 1);
-            const getY = (val) => 100 - (((val - minVal) / range) * 85 + 5); 
+            const getY = (val) => 100 - (((val - minVal) / range) * 80 + 10); 
+
+            // 1. Draw Rank Tier Markers (Background Grid)
+            const ranks = [
+                { val: 0, label: 'Iron' },
+                { val: 150, label: 'Gold' },
+                { val: 500, label: 'Emerald' },
+                { val: 1200, label: 'Diamond' },
+                { val: 2500, label: 'Netherite' }
+            ];
             
-            const points = historyData.map((d, i) => `${i * stepX},${getY(d)}`);
+            let gridHtml = '';
+            ranks.forEach(r => {
+                const y = getY(r.val);
+                if (y > 0 && y < 100) {
+                    gridHtml += `
+                        <line x1="0" y1="${y}" x2="1000" y2="${y}" class="graph-rank-marker"></line>
+                        <text x="5" y="${y - 4}" class="graph-label-text">${r.label}</text>
+                    `;
+                }
+            });
+
+            // 2. Calculate smooth Bezier path
+            const pts = historyData.map((d, i) => ({ x: i * stepX, y: getY(d) }));
+            const curvePath = getBezierCurve(pts);
+            const areaPath = `${curvePath} L 1000,100 L 0,100 Z`;
+
             svg.innerHTML = `
                 <defs>
                     <linearGradient id="eloAreaGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stop-color="#4ade80" stop-opacity="0.35" />
+                        <stop offset="0%" stop-color="#4ade80" stop-opacity="0.3" />
                         <stop offset="100%" stop-color="#4ade80" stop-opacity="0.0" />
                     </linearGradient>
                 </defs>
-                <path d="M ${points.join(' L ')} L 1000,100 L 0,100 Z" fill="url(#eloAreaGlow)" stroke="none"></path>
-                <path d="M ${points.join(' L ')}" fill="none" stroke="#4ade80" stroke-width="3"></path>
-                ${points.map((p, i) => `
-                    <circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="4" fill="#111" stroke="#4ade80" stroke-width="2" pointer-events="none"></circle>
-                    <circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="20" fill="transparent" stroke="transparent" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" style="cursor:crosshair;"></circle>
+                ${gridHtml}
+                <path d="${areaPath}" fill="url(#eloAreaGlow)" stroke="none"></path>
+                <path d="${curvePath}" fill="none" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                ${pts.map((p, i) => `
+                    <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#111" stroke="#4ade80" stroke-width="2" pointer-events="none"></circle>
+                    <circle cx="${p.x}" cy="${p.y}" r="20" fill="transparent" stroke="transparent" onmouseenter="showEloTooltip(event, '${Math.round(historyData[i])} ELO')" onmouseleave="hideEloTooltip()" onmousemove="moveEloTooltip(event)" style="cursor:crosshair;"></circle>
                 `).join('')}
             `;
         }
-
-        // Animate all numeric stat values counting up from 0
+        
         animateCounters(container);
-
         renderStatChart(document.getElementById('mining-graph'), stats['minecraft:mined'] || {}, 'bar-stone');
         renderStatChart(document.getElementById('combat-graph'), stats['minecraft:killed'] || {}, 'bar-emerald');
+    }
+
+    function getBezierCurve(pts) {
+        if (pts.length < 2) return `M ${pts[0].x},${pts[0].y}`;
+        let d = `M ${pts[0].x},${pts[0].y}`;
+        for (let i = 0; i < pts.length - 1; i++) {
+            const p0 = pts[i];
+            const p1 = pts[i + 1];
+            const cp1x = p0.x + (p1.x - p0.x) / 2;
+            const cp2x = p0.x + (p1.x - p0.x) / 2;
+            d += ` C ${cp1x},${p0.y} ${cp2x},${p1.y} ${p1.x},${p1.y}`;
+        }
+        return d;
     }
 
     function animateCounters(container) {
@@ -608,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!container) return;
         const sorted = Object.entries(data)
             .sort((a,b) => b[1] - a[1])
-            .slice(0, 10);
+            .slice(0, 5); // Kept to top 5 for cleaner look
         
         if (sorted.length === 0) {
             container.innerHTML = '<div class="no-data">No recorded activity.</div>';
@@ -620,15 +658,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const width = (val / max) * 100;
             const label = formatName(key);
             const ctxColor = getContextClass(key) || barClass;
+            const icon = getContextIcon(key);
             return `
-                <div class="graph-row">
-                    <div class="graph-label">${label}</div>
+                <div class="graph-row" style="margin-bottom: 15px;">
+                    <div class="graph-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                        <span>${icon} ${label}</span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--text-main);">${val.toLocaleString()}</span>
+                    </div>
                     <div class="graph-bar-container">
                         <div class="graph-bar ${ctxColor}" style="width: ${width}%"></div>
-                        <span class="graph-value">${val.toLocaleString()}</span>
                     </div>
                 </div>`;
         }).join('');
+    }
+
+    function getContextIcon(key) {
+        if (key.includes('diamond')) return '💎';
+        if (key.includes('gold')) return '🟡';
+        if (key.includes('iron')) return '⚙️';
+        if (key.includes('coal')) return '⚫';
+        if (key.includes('lapis')) return '🔵';
+        if (key.includes('redstone')) return '🔴';
+        if (key.includes('emerald')) return '💚';
+        if (key.includes('stone') || key.includes('cobble')) return '🪨';
+        if (key.includes('zombie')) return '🧟';
+        if (key.includes('creeper')) return '🧨';
+        if (key.includes('skeleton')) return '☠️';
+        if (key.includes('player')) return '⚔️';
+        return '📦';
     }
 
     function formatName(str) {
