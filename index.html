@@ -54,6 +54,19 @@
                     <i class="fa-solid fa-newspaper"></i>
                     <span>Updates</span>
                 </div>
+
+                <!-- Live Activity Widget -->
+                <div class="live-activity-widget">
+                    <div class="live-activity-header">
+                        <h3>Live Broadcast</h3>
+                        <div class="pulse-dot"></div>
+                    </div>
+                    <div id="live-activity-feed">
+                        <div class="live-log-item" style="justify-content: center; color: var(--text-muted); font-size: 0.75rem;">
+                            Monitoring activity...
+                        </div>
+                    </div>
+                </div>
             </nav>
 
             <div class="server-status-card">
@@ -325,7 +338,9 @@
             </div>
         </div>
     </div>
+    <!-- Toast Container for Live Broadcasts -->
+    <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=56"></script>
+    <script src="app.js?v=57"></script>
 </body>
 </html>
