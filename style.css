@@ -328,7 +328,11 @@ select#sort-by option {
     overflow-y: auto; display: flex; flex-direction: column;
 }
 
-.details-panel.open { transform: translateX(0); box-shadow: -20px 0 100px rgba(0,0,0,0.8); }
+.details-panel.open { 
+    transform: translateX(0) !important; 
+    box-shadow: -20px 0 100px rgba(0,0,0,0.8);
+    pointer-events: auto;
+}
 
 .detail-content-wrapper {
     padding: 48px;
