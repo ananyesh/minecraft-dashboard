@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let playersOdo = null;
     const statCache = {}; // { uuid_statKey: lastValue } for odometer prev->new animation
     let eloMap = {};      // { uuid: calculatedElo } — updated by recalculateAllElos()
+    let liveLogs = [];    // Global storage for events to support search/filtering
 
     // Configuration
     const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
@@ -44,6 +45,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // News / Blog Data
     const updates = [
+        {
+            date: "April 25, 2026",
+            version: "v2.0",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Live Events Search & Dynamic Filtering",
+            desc: "The Live Events feed is now fully searchable, allowing you to track specific player achievements with ease.",
+            features: ["Event Tab Search", "Real-time Filtering", "Empty Result States"],
+            content: `
+                <h2>Searchable Telemetry</h2>
+                <p>We've integrated the global search bar with the Live Events feed. You can now type a player's name into the search bar while in the Events tab to instantly filter their historical log.</p>
+                
+                <h2>Dynamic Result Handling</h2>
+                <p>The feed now handles empty search states with a clean, branded "No results" screen, making it easier to navigate through large amounts of server data.</p>
+            `
+        },
+        {
+            date: "April 25, 2026",
+            version: "v1.9",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Competitive Event Logic Refinement",
+            desc: "Improved accuracy for Elo source attribution and enhanced rank transition visibility.",
+            features: ["Neutral Elo Source Labeling", "Clear Rank Up/Down Text", "Improved Event Icons"],
+            content: `
+                <h2>Event Attribution Fix</h2>
+                <p>We've updated the labeling system for Elo changes. Previously, some gains were incorrectly labeled as 'Combat Engagement' even when earned through playtime. We've switched to a more accurate <strong>Competitive Update</strong> tag to reflect all forms of performance gains.</p>
+                
+                <h2>Enhanced Rank Visibility</h2>
+                <p>Rank updates are now much clearer in the Live Events feed. Instead of just showing the rank name, the feed now explicitly states <strong>'Promoted to'</strong> or <strong>'Demoted to'</strong> alongside updated icons for better visual cues.</p>
+            `
+        },
         {
             date: "April 25, 2026",
             version: "v1.8",
@@ -256,37 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 `).join('');
             }
 
-            // Populate the new full Live Events Tab
-            const fullFeed = document.getElementById('events-feed-container');
-            if (fullFeed) {
-                fullFeed.innerHTML = logs.map(log => {
-                    const timeStr = new Date(log.time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                    let icon = '<i class="fa-solid fa-bolt"></i>';
-                    let cardClass = 'event-log-card';
-                    let valueStr = '';
-                    
-                    if (log.type === 'PROMOTED') {
-                        cardClass += ' event-card-rankup'; icon = '<i class="fa-solid fa-arrow-up-right-dots"></i>'; valueStr = log.details;
-                    } else if (log.type === 'DEMOTED') {
-                        cardClass += ' event-card-rankdown'; icon = '<i class="fa-solid fa-arrow-down-right-dots"></i>'; valueStr = log.details;
-                    } else if (log.change >= 0) {
-                        cardClass += ' event-card-gain'; icon = '<i class="fa-solid fa-arrow-trend-up"></i>'; valueStr = '+' + log.change + ' Elo';
-                    } else {
-                        cardClass += ' event-card-loss'; icon = '<i class="fa-solid fa-arrow-trend-down"></i>'; valueStr = log.change + ' Elo';
-                    }
-                    
-                    return `
-                    <div class="${cardClass}">
-                        <div class="event-time">${timeStr}</div>
-                        <div class="event-icon">${icon}</div>
-                        <div class="event-details">
-                            <span class="event-user">${log.user}</span>
-                            <span class="event-action">${log.type === 'PROMOTED' || log.type === 'DEMOTED' ? 'Rank Update' : 'Combat Engagement'}</span>
-                        </div>
-                        <div class="event-value">${valueStr}</div>
-                    </div>`;
-                }).join('');
-            }
+            // Store globally for search and call render
+            liveLogs = logs;
+            renderEvents();
 
             // Check for NEW logs to Toast (don't show old logs on load)
             const newLogs = logs.filter(l => l.time > lastSeenLogTime).reverse();
@@ -310,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let iconClass = 'fa-arrow-trend-up';
         if (log.type === 'PROMOTED') iconClass = 'fa-trophy';
-        if (log.type === 'DEMOTED') iconClass = 'fa-angle-double-down';
+        if (log.type === 'DEMOTED') iconClass = 'fa-angles-down';
         if (!isGain && !isRank) iconClass = 'fa-arrow-trend-down';
 
         const toast = document.createElement('div');
@@ -327,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${isRank ? (log.type === 'PROMOTED' ? 'RANK UP!' : 'RANK DOWN') : `(${isGain ? '+' : ''}${log.change})`}
                     </span>
                 </div>
-                <div class="toast-msg">${log.type}: ${log.details}</div>
+                <div class="toast-msg">${log.type === 'PROMOTED' ? 'New Rank Achieved:' : (log.type === 'DEMOTED' ? 'Rank Adjusted:' : 'Performance Update:')} ${log.details}</div>
             </div>
         `;
 
@@ -350,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentTab === 'leaderboard') renderLeaderboard();
         else if (currentTab === 'faq') renderFaq();
         else if (currentTab === 'updates') renderUpdates();
+        else if (currentTab === 'events') renderEvents();
         
         renderHealthStatus();
         renderTripleGraphs();
@@ -1067,6 +1075,7 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', () => {
         if (currentTab === 'players') renderPlayersGrid();
         else if (currentTab === 'leaderboard') renderLeaderboard();
+        else if (currentTab === 'events') renderEvents();
     });
 
     // FAQ accordion: click question to toggle answer
@@ -1190,4 +1199,81 @@ document.addEventListener('DOMContentLoaded', () => {
     window.hideChartHover = function(crosshairId) {
         hideEloTooltip();
     };
+
+    /**
+     * Renders the Live Events Tab with search filtering
+     */
+    function renderEvents() {
+        const fullFeed = document.getElementById('events-feed-container');
+        if (!fullFeed) return;
+
+        const query = (searchInput.value || '').toLowerCase();
+        
+        // Sort players to determine rank context for each log
+        const sortedP = [...players].sort((a, b) => (b.elo || 0) - (a.elo || 0));
+
+        // Filter logs based on search query (username or details)
+        const filteredLogs = liveLogs.filter(log => {
+            if (!query) return true;
+            return (log.user || '').toLowerCase().includes(query) || 
+                   (log.details || '').toLowerCase().includes(query);
+        });
+
+        if (filteredLogs.length === 0) {
+            fullFeed.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.3;"></i>
+                    <p>No events found for "${searchInput.value}"</p>
+                </div>
+            `;
+            return;
+        }
+
+        fullFeed.innerHTML = filteredLogs.map(log => {
+            const timeStr = new Date(log.time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            let icon = '<i class="fa-solid fa-bolt"></i>';
+            let cardClass = 'event-log-card';
+            let valueStr = '';
+            
+            // Rank Tier Logic
+            const pIdx = sortedP.findIndex(p => p.username === log.user);
+            const playerRank = pIdx === -1 ? 0 : pIdx + 1;
+            
+            let tierClass = 'event-rank-regular';
+            let tagClass = 'tag-regular';
+            let tagText = playerRank > 0 ? '#' + playerRank : 'UNRANKED';
+
+            if (playerRank > 0 && playerRank <= 10) { tierClass = 'event-rank-top10'; tagClass = 'tag-top10'; }
+            else if (playerRank > 10 && playerRank <= 50) { tierClass = 'event-rank-top50'; tagClass = 'tag-top50'; }
+            else if (playerRank > 50 && playerRank <= 100) { tierClass = 'event-rank-top100'; tagClass = 'tag-top100'; }
+            else if (playerRank > 100 && playerRank <= 250) { tierClass = 'event-rank-top250'; tagClass = 'tag-top250'; }
+
+            cardClass += ' ' + tierClass;
+
+            if (log.type === 'PROMOTED') {
+                cardClass += ' event-card-rankup'; 
+                icon = '<i class="fa-solid fa-angles-up"></i>'; 
+                valueStr = `<span style="opacity: 0.7; font-size: 0.9rem;">RANK UP:</span> ${log.details}`;
+            } else if (log.type === 'DEMOTED') {
+                cardClass += ' event-card-rankdown'; 
+                icon = '<i class="fa-solid fa-angles-down"></i>'; 
+                valueStr = `<span style="opacity: 0.7; font-size: 0.9rem;">RANK DOWN:</span> ${log.details}`;
+            } else if (log.change >= 0) {
+                cardClass += ' event-card-gain'; icon = '<i class="fa-solid fa-arrow-trend-up"></i>'; valueStr = '+' + log.change + ' Elo';
+            } else {
+                cardClass += ' event-card-loss'; icon = '<i class="fa-solid fa-arrow-trend-down"></i>'; valueStr = log.change + ' Elo';
+            }
+            
+            return `
+            <div class="${cardClass}">
+                <div class="event-time">${timeStr}</div>
+                <div class="event-icon">${icon}</div>
+                <div class="event-details">
+                    <span class="event-user">${log.user} <span class="event-rank-tag ${tagClass}">${tagText}</span></span>
+                    <span class="event-action">${log.type === 'PROMOTED' || log.type === 'DEMOTED' ? 'Rank Update' : 'Competitive Update'}</span>
+                </div>
+                <div class="event-value">${valueStr}</div>
+            </div>`;
+        }).join('');
+    }
 });
