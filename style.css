@@ -1040,18 +1040,80 @@ select#sort-by option {
     margin-left: auto;
     font-size: 1.1rem;
 }
-.event-card-gain { border-left: 4px solid #10b981; }
 .event-card-gain .event-icon { color: #10b981; background: rgba(16, 185, 129, 0.1); }
 .event-card-gain .event-value { color: #10b981; }
 
-.event-card-loss { border-left: 4px solid #ef4444; }
 .event-card-loss .event-icon { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 .event-card-loss .event-value { color: #ef4444; }
 
-.event-card-rankup { border-left: 4px solid #f59e0b; }
 .event-card-rankup .event-icon { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
 .event-card-rankup .event-value { color: #f59e0b; }
 
-.event-card-rankdown { border-left: 4px solid #8b5cf6; }
 .event-card-rankdown .event-icon { color: #8b5cf6; background: rgba(139, 92, 246, 0.1); }
 .event-card-rankdown .event-value { color: #8b5cf6; }
+
+/* Live Events Rank Tier Styling */
+.event-rank-top10 { 
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, transparent 50%, rgba(245, 158, 11, 0.15) 100%) !important; 
+    border-left: 4px solid #f59e0b !important;
+    border-right: 4px solid #f59e0b !important; 
+    box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.1) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Shimmer Animation for Top 10 */
+.event-rank-top10::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -150%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: shimmer 4s infinite linear;
+    pointer-events: none;
+}
+@keyframes shimmer {
+    0% { left: -150%; }
+    100% { left: 250%; }
+}
+
+/* Text Color Matching Rank Tiers (ONLY for rank updates) */
+.event-rank-top10.event-card-rankup .event-value, .event-rank-top10.event-card-rankdown .event-value { color: #f59e0b !important; }
+.event-rank-top50.event-card-rankup .event-value, .event-rank-top50.event-card-rankdown .event-value { color: #8b5cf6 !important; }
+.event-rank-top100.event-card-rankup .event-value, .event-rank-top100.event-card-rankdown .event-value { color: #3b82f6 !important; }
+.event-rank-top250.event-card-rankup .event-value, .event-rank-top250.event-card-rankdown .event-value { color: #10b981 !important; }
+.event-rank-regular.event-card-rankup .event-value, .event-rank-regular.event-card-rankdown .event-value { color: #94a3b8 !important; }
+
+.event-rank-top50 { 
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 0%, transparent 100%) !important; 
+    border-left: 4px solid #8b5cf6 !important;
+    border-right: 4px solid #8b5cf6 !important; 
+}
+.event-rank-top100 { 
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%) !important; 
+    border-left: 4px solid #3b82f6 !important;
+    border-right: 4px solid #3b82f6 !important; 
+}
+.event-rank-top250 { 
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%) !important; 
+    border-left: 4px solid #10b981 !important;
+    border-right: 4px solid #10b981 !important; 
+}
+.event-rank-regular { 
+    border-left: 4px solid #334155 !important;
+    border-right: 4px solid #334155 !important; 
+}
+
+.event-rank-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+.tag-top10 { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+.tag-top50 { background: #8b5cf622; color: #8b5cf6; border: 1px solid #8b5cf644; }
+.tag-top100 { background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644; }
+.tag-top250 { background: #10b98122; color: #10b981; border: 1px solid #10b98144; }
+.tag-regular { background: #33415544; color: #94a3b8; border: 1px solid #47556944; }
