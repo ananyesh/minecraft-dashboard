@@ -44,6 +44,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const updates = [
         {
             date: "April 24, 2026",
+            version: "v1.7",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Pro-Analytics & Profile Redesign",
+            desc: "Effortless graph hover interactions and a more spacious player profile layout.",
+            features: ["Pro-Analytics Graph Hover", "Invisible Data Slices", "Wider Profile Panel", "Bug Fixes"],
+            content: `
+                <h2>Pro-Analytics Hover System</h2>
+                <p>We've completely overhauled how you interact with the ELO and Rank graphs. Instead of trying to precisely click or hover over tiny data points, you can now simply move your mouse anywhere along the timeline.</p>
+                <p>An invisible vertical "slice" system combined with a sleek crosshair guide will automatically snap to the nearest data point, making data inspection feel like professional trading software.</p>
+                
+                <h2>Expanded Profile Layout</h2>
+                <p>We heard your feedback that the player details panel felt a bit cramped. We've widened the panel significantly to provide more breathing room for the premium graphs and detailed statistics.</p>
+            `
+        },
+        {
+            date: "April 24, 2026",
             version: "v1.6",
             author: "ananyesh",
             handle: "@ananyesh",
@@ -600,6 +618,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.updateDetailPanel = (player) => {
         try {
+            const elo = calculateElo(player);
+            const eloRank = getRank(elo);
+            const sortedP = [...players].sort((a, b) => (b.elo || 0) - (a.elo || 0));
+            const currentRank = sortedP.findIndex(p => p.uuid === player.uuid) + 1;
+            
+            // 1. Banner Color
+            const banner = document.getElementById('profile-banner');
+            if (banner) {
+                banner.style.background = `linear-gradient(135deg, ${eloRank.color}33, rgba(0,0,0,0.8))`;
+            }
+
+            // 2. Identity Header
             const usernameEl = document.getElementById('detail-username');
             if (usernameEl) usernameEl.textContent = player.username || "Unknown";
             
@@ -609,6 +639,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 avatarEl.src = `https://mc-heads.net/body/${skinIdentity}/160`;
             }
 
+            const badgesEl = document.getElementById('detail-badges');
+            if (badgesEl) {
+                const isOnline = player.online;
+                badgesEl.innerHTML = `
+                    <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
+                    <span class="leader-status" style="font-size: 11px;">${isOnline ? '● Active' : '○ Offline'}</span>
+                `;
+            }
+
+            // 3. Hero Stats
+            const heroElo = document.getElementById('hero-elo');
+            if (heroElo) heroElo.textContent = elo;
+            const heroRankEl = document.getElementById('hero-rank');
+            if (heroRankEl) heroRankEl.textContent = '#' + currentRank;
+            const heroEnergy = document.getElementById('hero-energy');
+            if (heroEnergy) heroEnergy.textContent = player.energy || 0;
+
+            // 4. General Stats
             const stats = player.stats || {};
             const custom = stats['minecraft:custom'] || {};
             const container = document.getElementById('general-stats-container');
@@ -620,12 +668,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const playtime = Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60) + 'h';
                 const damage = Math.floor((custom['DAMAGE_DEALT'] || 0) / 10);
                 const uuid = player.uuid;
-                const energy = player.energy || 0;
-                const eClass = energy === 0 ? "energy-dead" : "";
-                const eInten = Math.min(10, energy) / 10;
 
                 let gridHtml = `
-                    <div class="stat-card energy-detail-card ${eClass}" style="--intensity: ${eInten};"><span class="stat-label"><i class="fa-solid fa-bolt"></i> Energy</span><span class="stat-value" style="color:var(--tps-color)" data-count="${energy}" data-stat-key="${uuid}_energy">${energy}</span></div>
                     <div class="stat-card"><span class="stat-label">Playtime</span><span class="stat-value">${playtime}</span></div>
                     <div class="stat-card"><span class="stat-label">Deaths</span><span class="stat-value" data-count="${deaths}" data-stat-key="${uuid}_deaths">${deaths}</span></div>
                     <div class="stat-card"><span class="stat-label">Kills</span><span class="stat-value" data-count="${kills}" data-stat-key="${uuid}_kills">${kills}</span></div>
@@ -715,6 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const renderSlices = (pList, dataArr, unit, cId) => pList.map((p, i) => {
                     const w = 1000 / pList.length;
                     return `<rect class="chart-slice" x="${p.x - w/2}" y="0" width="${w}" height="100" 
+                        fill="transparent" stroke="none" 
                         onmouseenter="handleChartHover(event, '${cId}', '${dataArr[i]} ${unit}', ${p.x})" 
                         onmouseleave="hideChartHover('${cId}')"></rect>`;
                 }).join('');
