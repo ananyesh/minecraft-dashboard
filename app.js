@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const healthSection = document.getElementById('health-section');
     const updatesSection = document.getElementById('updates-section');
     const faqSection = document.getElementById('faq-section');
+    const eventsSection = document.getElementById('events-section');
     
     // Health UI
     const hTPS = document.getElementById('h-tps');
@@ -39,9 +40,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const navHealth = document.getElementById('nav-health');
     const navUpdates = document.getElementById('nav-updates');
     const navFaq = document.getElementById('nav-faq');
+    const navEvents = document.getElementById('nav-events');
 
     // News / Blog Data
     const updates = [
+        {
+            date: "April 25, 2026",
+            version: "v1.8",
+            author: "ananyesh",
+            handle: "@ananyesh",
+            avatar: "https://mc-heads.net/avatar/ananyesh/42",
+            title: "Live Events Hub & Profile Hotfixes",
+            desc: "Introducing a dedicated telemetry feed for global server events and critical layout adjustments.",
+            features: ["Live Events Tab", "Enlarged Broadcast Toasts", "Avatar Distortion Fix", "Profile Padding Adjustment"],
+            content: `
+                <h2>Brand New 'Live Events' Feed</h2>
+                <p>You can now view a permanent, historical log of all global server events in the new <strong>Live Events</strong> tab on the left sidebar. This feed tracks Elo gains, Elo losses, and major Rank promotions in real-time, giving you a crystal clear view of the server's competitive landscape.</p>
+                
+                <h2>Bigger Broadcasts & UI Hotfixes</h2>
+                <p>We've significantly scaled up the size of the live broadcast pop-ups (toasts) so you never miss a major rank change while scrolling. Additionally, we fixed a severe visual bug that caused player avatars on the profile page to look incredibly distorted and zoomed in. They now perfectly display a crisp 3D head.</p>
+            `
+        },
         {
             date: "April 24, 2026",
             version: "v1.7",
@@ -75,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <h2>Global Event Feed</h2>
                 <p>Check the new <strong>Live Activity</strong> widget in the sidebar. It tracks the last 20 server-wide events, providing a chronological history of the server's competitive landscape.</p>
-
+                
                 <h2>Rank Milestones</h2>
                 <p>When a player ascends to a new rank (e.g. from Iron to Gold), a special <strong>Gold Trophy Toast</strong> will appear for all users. Competitive milestones have never felt this premium.</p>
             `
@@ -95,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <h2>Fixed Telemetry Timeline</h2>
                 <p>We resolved an issue where ELO graphs were displaying inverted timelines. Your graphs now correctly read from left (past) to right (present), anchored to your current score.</p>
-
+                
                 <h2>Leaderboard History</h2>
                 <p>The new Placement graph tracks your rank over time. If you haven't played on the new version yet, we show your current rank as a stable baseline until more snapshots are recorded.</p>
             `
@@ -113,10 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h2>The Absolute Source of Truth</h2>
                 <p>We've heard your feedback regarding ELO drift. From now on, your ELO score is no longer a separate number—it is the direct sum of every gain and loss in your history logs.</p>
                 <p>To ensure this is 100% accurate, we have <strong>removed the 50-log limit</strong>. Every single action you take is now a permanent part of your legacy.</p>
-
+                
                 <h2>Automatic Synchronization</h2>
                 <p>You no longer need to run manual repair commands. Every time you join the server, the Quartz engine performas a <strong>"Silent Repair"</strong> that recalculates your score from scratch based on your logs.</p>
-
+                
                 <h2>Starting from Scratch</h2>
                 <p>We have removed the default 100 ELO starting bonus. Everyone now starts at <span class="highlight-text">0</span>, making every point you earn feel more meaningful. Don't worry—your ranks have been adjusted to match this new scale!</p>
             `
@@ -235,6 +254,38 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="log-change ${log.change >= 0 ? 'pos' : 'neg'}">${log.change >= 0 ? '+' : ''}${log.change}</div>
                     </div>
                 `).join('');
+            }
+
+            // Populate the new full Live Events Tab
+            const fullFeed = document.getElementById('events-feed-container');
+            if (fullFeed) {
+                fullFeed.innerHTML = logs.map(log => {
+                    const timeStr = new Date(log.time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                    let icon = '<i class="fa-solid fa-bolt"></i>';
+                    let cardClass = 'event-log-card';
+                    let valueStr = '';
+                    
+                    if (log.type === 'PROMOTED') {
+                        cardClass += ' event-card-rankup'; icon = '<i class="fa-solid fa-arrow-up-right-dots"></i>'; valueStr = log.details;
+                    } else if (log.type === 'DEMOTED') {
+                        cardClass += ' event-card-rankdown'; icon = '<i class="fa-solid fa-arrow-down-right-dots"></i>'; valueStr = log.details;
+                    } else if (log.change >= 0) {
+                        cardClass += ' event-card-gain'; icon = '<i class="fa-solid fa-arrow-trend-up"></i>'; valueStr = '+' + log.change + ' Elo';
+                    } else {
+                        cardClass += ' event-card-loss'; icon = '<i class="fa-solid fa-arrow-trend-down"></i>'; valueStr = log.change + ' Elo';
+                    }
+                    
+                    return `
+                    <div class="${cardClass}">
+                        <div class="event-time">${timeStr}</div>
+                        <div class="event-icon">${icon}</div>
+                        <div class="event-details">
+                            <span class="event-user">${log.user}</span>
+                            <span class="event-action">${log.type === 'PROMOTED' || log.type === 'DEMOTED' ? 'Rank Update' : 'Combat Engagement'}</span>
+                        </div>
+                        <div class="event-value">${valueStr}</div>
+                    </div>`;
+                }).join('');
             }
 
             // Check for NEW logs to Toast (don't show old logs on load)
@@ -636,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const avatarEl = document.getElementById('detail-avatar-body');
             if (avatarEl) {
                 const skinIdentity = player.skin || player.username || "steve";
-                avatarEl.src = `https://mc-heads.net/body/${skinIdentity}/160`;
+                avatarEl.src = `https://mc-heads.net/avatar/${skinIdentity}/160`;
             }
 
             const badgesEl = document.getElementById('detail-badges');
@@ -975,6 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
         healthSection.style.display = 'none';
         faqSection.style.display = 'none';
         updatesSection.style.display = 'none';
+        eventsSection.style.display = 'none';
 
         if (tab === 'players') {
             navPlayers.classList.add('active'); 
@@ -993,6 +1045,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'updates') {
             navUpdates.classList.add('active');
             updatesSection.style.display = 'block';
+            if (document.getElementById('blog-feed').innerHTML === '') renderUpdates();
+        } else if (tab === 'events') {
+            navEvents.classList.add('active');
+            eventsSection.style.display = 'block';
         }
         renderAll();
     }
@@ -1002,6 +1058,7 @@ document.addEventListener('DOMContentLoaded', () => {
     navHealth.addEventListener('click', () => switchTab('health'));
     navUpdates.addEventListener('click', () => switchTab('updates'));
     navFaq.addEventListener('click', () => switchTab('faq'));
+    navEvents.addEventListener('click', () => switchTab('events'));
     closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
