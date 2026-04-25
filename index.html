@@ -54,6 +54,10 @@
                     <i class="fa-solid fa-newspaper"></i>
                     <span>Updates</span>
                 </div>
+                <div class="nav-item" id="nav-events">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                    <span>Live Events</span>
+                </div>
 
                 <!-- Live Activity Widget -->
                 <div class="live-activity-widget">
@@ -270,6 +274,19 @@
                         <!-- Blog posts injected here -->
                     </div>
                 </section>
+
+                <!-- Live Events Feed Section -->
+                <section id="events-section" style="display: none;">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <h2>Global Event Telemetry</h2>
+                            <p>Real-time historical feed of server-wide player achievements and rankings.</p>
+                        </div>
+                    </div>
+                    <div class="events-feed-container" id="events-feed-container">
+                        <!-- Event log cards injected here -->
+                    </div>
+                </section>
             </div>
         </main>
 
@@ -285,7 +302,7 @@
             <!-- Identity Header -->
             <div class="profile-header-identity stagger-1">
                 <div class="profile-avatar-wrapper">
-                    <img src="https://mc-heads.net/body/steve/160" id="detail-avatar-body" alt="Avatar" class="avatar-body">
+                    <img src="https://mc-heads.net/avatar/steve/160" id="detail-avatar-body" alt="Avatar" class="avatar-body">
                 </div>
                 <div class="profile-name-block">
                     <h2 class="player-name" id="detail-username">Username</h2>
@@ -373,6 +390,6 @@
     <!-- Toast Container for Live Broadcasts -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=62"></script>
+    <script src="app.js?v=64"></script>
 </body>
 </html>
