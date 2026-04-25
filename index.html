@@ -277,15 +277,41 @@
 
     <div class="details-panel" id="details-panel">
         <button class="close-panel" id="close-details"><i class="fa-solid fa-xmark"></i></button>
+        <div class="profile-banner-container">
+            <div class="profile-banner" id="profile-banner"></div>
+        </div>
+
         <div class="detail-content-wrapper">
-            <div class="player-profile-header">
-                <div class="avatar-large-container">
+            <!-- Identity Header -->
+            <div class="profile-header-identity stagger-1">
+                <div class="profile-avatar-wrapper">
                     <img src="https://mc-heads.net/body/steve/160" id="detail-avatar-body" alt="Avatar" class="avatar-body">
                 </div>
-                <h2 class="player-name" id="detail-username">Username</h2>
+                <div class="profile-name-block">
+                    <h2 class="player-name" id="detail-username">Username</h2>
+                    <div class="profile-badges" id="detail-badges">
+                        <!-- Rank Pill and Status go here -->
+                    </div>
+                </div>
             </div>
 
-            <div class="stat-group">
+            <!-- Hero Stats Strip -->
+            <div class="hero-stats-row stagger-2">
+                <div class="hero-stat-card">
+                    <span class="hero-label">Elo Rating</span>
+                    <span class="hero-value" id="hero-elo">0</span>
+                </div>
+                <div class="hero-stat-card">
+                    <span class="hero-label">Leaderboard</span>
+                    <span class="hero-value" id="hero-rank">#0</span>
+                </div>
+                <div class="hero-stat-card">
+                    <span class="hero-label">Total Energy</span>
+                    <span class="hero-value" id="hero-energy" style="color: #fbbf24">0</span>
+                </div>
+            </div>
+
+            <div class="stat-group stagger-3">
                 <div class="stat-grid" id="general-stats-container"></div>
             </div>
 
@@ -347,6 +373,6 @@
     <!-- Toast Container for Live Broadcasts -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="app.js?v=60"></script>
+    <script src="app.js?v=62"></script>
 </body>
 </html>
