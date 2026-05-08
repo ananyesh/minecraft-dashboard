@@ -1,0 +1,22 @@
+# WebStats Configuration
+
+# Your Firebase Realtime Database URL. 
+# 1. Create a project at https://console.firebase.google.com/
+# 2. Add a Realtime Database.
+# 3. Paste the URL here (make sure it ends with /stats.json)
+# Example: "https://my-server-stats.firebaseio.com/stats.json"
+firebase-url: "https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/stats.json"
+
+# How often to sync to the cloud in seconds (default 10s).
+update-interval: 10
+
+# Discord Whitelist System
+# 1. Go to https://discord.com/developers/applications
+# 2. Create a Bot, enable "Message Content Intent".
+# 3. Paste the Token here.
+discord-bot-token: ""
+# The ID of the channel where players type their Minecraft username.
+whitelist-channel-id: ""
+# Set to true if you use the 'EasyWhitelist' plugin. 
+# If false, it uses the standard Minecraft /whitelist command.
+use-easy-whitelist: false

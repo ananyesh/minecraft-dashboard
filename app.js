@@ -6,9 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPlayer = null;
     let currentSort = 'none';
     let currentTab = 'players';
+    let rankedOnly = false;
     let tpsOdo = null;
     let msptOdo = null;
     let playersOdo = null;
+    let netOdo = null;
     const statCache = {}; // { uuid_statKey: lastValue } for odometer prev->new animation
     let eloMap = {};      // { uuid: calculatedElo } — updated by recalculateAllElos()
     let liveLogs = [];    // Global storage for events to support search/filtering
@@ -360,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentTab === 'events') renderEvents();
         
         renderHealthStatus();
-        renderTripleGraphs();
+        renderQuadGraphs();
 
         if (selectedPlayer) {
             const updated = players.find(p => p.uuid === selectedPlayer.uuid);
@@ -374,9 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderHealthStatus() {
         const tps = serverHealth.tps || 20;
         const mspt = serverHealth.mspt || 0;
+        const netIn = serverHealth.net_in || 0;
+        const netOut = serverHealth.net_out || 0;
+        const netTotal = netIn + netOut;
 
         const tpsEl = document.getElementById('h-tps');
         const msptEl = document.getElementById('h-mspt');
+        const netEl = document.getElementById('h-net');
 
         // Initialize Odometers on first render
         if (typeof Odometer !== 'undefined') {
@@ -386,13 +392,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!msptOdo && msptEl) {
                 msptOdo = new Odometer({ el: msptEl, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
             }
+            if (!netOdo && netEl) {
+                netOdo = new Odometer({ el: netEl, value: netTotal, format: 'd', theme: 'minimal', duration: 800 });
+            }
             // Update values (animate)
             if (tpsOdo) tpsOdo.update(Math.round(tps));
             if (msptOdo) msptOdo.update(Math.round(mspt));
+            if (netOdo) netOdo.update(Math.round(netTotal));
         } else {
             // Fallback if odometer.js didn't load
             if (tpsEl) tpsEl.textContent = tps.toFixed(1);
             if (msptEl) msptEl.textContent = Math.round(mspt);
+            if (netEl) netEl.textContent = netTotal.toFixed(1);
         }
 
         // Color coding - TPS
@@ -405,6 +416,8 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (mspt >= 12.5) msptEl.style.setProperty('color', '#fef08a', 'important'); // Light yellow
             else                     msptEl.style.setProperty('color', '#4ade80', 'important'); // Light green
         }
+        // Color coding - Network (Blue theme)
+        if (netEl) netEl.style.color = '#3b82f6';
 
         // Players Online card
         const playersEl = document.getElementById('h-players');
@@ -419,11 +432,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderTripleGraphs() {
+    function renderQuadGraphs() {
         if (!playerHistory || playerHistory.length < 2) return;
         renderSingleChart('graph-players', 'p', Math.max(...playerHistory.map(d => d.p || 0), 5), 'var(--player-color)', 'line-players');
         renderSingleChart('graph-tps', 't', 20, 'var(--tps-color)', 'line-tps');
         renderSingleChart('graph-mspt', 'm', Math.max(...playerHistory.map(d => d.m || 0), 60), 'var(--mspt-color)', 'line-mspt');
+        renderSingleChart('graph-net', 'ni', Math.max(...playerHistory.map(d => (d.ni || 0) + (d.no || 0)), 10), '#3b82f6', 'line-net');
     }
 
     function renderSingleChart(svgId, key, maxVal, color, lineClass) {
@@ -510,6 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupChartTracking('wrapper-players', 'graph-players', 'tooltip-players', 'p', 'Players', '');
     setupChartTracking('wrapper-tps', 'graph-tps', 'tooltip-tps', 't', 'TPS', '');
     setupChartTracking('wrapper-mspt', 'graph-mspt', 'tooltip-mspt', 'm', 'MSPT', 'ms');
+    setupChartTracking('wrapper-net', 'graph-net', 'tooltip-net', 'ni', 'Net In', ' Mbps');
 
     /**
      * Player Tab: Grid View
@@ -543,13 +558,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <div class="player-card ${!player.online ? 'offline-card' : ''}" onclick="showPlayerDetails('${player.uuid}')">
+                    ${(player.ranked || 0) > 0 ? `<div class="p-ranked-badge"><i class="fa-solid fa-crown"></i> Rank #${player.ranked}</div>` : ''}
                     <div class="p-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/80" alt="${player.username}"></div>
                     <div class="p-name">${player.username}</div>
                     <div class="p-status ${player.online ? 'online' : 'offline'}">
                         <span class="status-dot"></span> ${player.online ? 'Active' : 'Offline'}
                     </div>
-                    <div class="p-energy-badge ${(player.energy || 0) === 0 ? 'energy-dead' : ''}" style="--intensity: ${Math.min(10, player.energy || 0)/10};">
-                        <i class="fa-solid fa-bolt"></i> <span class="val">${player.energy || 0}</span> <span class="lab">Energy</span>
+                    <div class="strength-row">
+                        <div class="p-strength-badge ${(player.strength || 0) === 0 ? 'strength-dead' : ''} ${(player.strength || 0) === 5 ? 'strength-max' : ''}" style="--intensity: ${(player.strength || 0) / 5};">
+                            <i class="fa-solid fa-hand-fist"></i> <span class="val">${player.strength || 0}</span> <span class="lab">Strength</span>
+                        </div>
+                        <div class="p-weapon-badge">
+                            <i class="fa-solid ${getWeaponIcon(player.weapon)}"></i> <span class="lab">Weapon:</span> <span class="val">${player.weapon || 'None'}</span>
+                        </div>
                     </div>
                     <div class="p-quick-stats">
                         <div class="stat-item"><span class="val">${m1Val}</span><span class="lab">${m1Label}</span></div>
@@ -567,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Leaderboard Tab: Ranked List View
      */
     function renderLeaderboard() {
-        const sorted = getSortedPlayers();
+        const sorted = getSortedPlayers(true);
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
 
         let currentRank = 1;
@@ -621,7 +642,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="leader-name" title="${playerData.username}">${playerData.username}</span>
                             <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                         </div>
-                        <span class="leader-status">${isOnline ? '● Active' : '○ Offline'}</span>
+                        <div class="l-stats-mini">
+                            <span class="leader-status">${isOnline ? '● Active' : '○ Offline'}</span>
+                            <span class="l-stat-item l-stat-strength"><i class="fa-solid fa-hand-fist"></i> ${playerData.strength || 0}</span>
+                            <span class="l-stat-item l-stat-weapon"><i class="fa-solid ${getWeaponIcon(playerData.weapon)}"></i> ${playerData.weapon || 'None'}</span>
+                            ${(playerData.ranked || 0) > 0 ? `<span class="l-stat-item" style="color:#fbbf24; font-weight:700;"><i class="fa-solid fa-crown"></i> ${playerData.ranked}</span>` : ''}
+                        </div>
                     </div>
                     <div class="leader-metric">
                         <span class="m-val" style="color:${currentSort === 'none' ? eloRank.color : 'var(--primary)'}">${playerData.displayVal}</span>
@@ -655,12 +681,45 @@ document.addEventListener('DOMContentLoaded', () => {
         return              { name: 'Dirt',       color: '#A0714A', icon: '🟫', min: -100, next: 0    };
     }
 
-    function getSortedPlayers() {
+    function getSortedPlayers(forLeaderboard = false) {
         let sorted = [...players];
-        if (currentSort === 'playtime') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
-        else if (currentSort === 'kills') sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
-        else if (currentSort === 'mined') sorted.sort((a, b) => (b.stats?.total_mined || 0) - (a.stats?.total_mined || 0));
-        else sorted.sort((a, b) => calculateElo(b) - calculateElo(a));
+        
+        // If it's for the leaderboard, we ONLY care about ELO/chosen metric
+        if (forLeaderboard) {
+            if (currentSort === 'playtime') {
+                return sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
+            } else if (currentSort === 'mined') {
+                return sorted.sort((a, b) => (b.stats?.['total_mined'] || 0) - (a.stats?.['total_mined'] || 0));
+            } else if (currentSort === 'kills') {
+                return sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
+            } else {
+                return sorted.sort((a, b) => calculateElo(b) - calculateElo(a));
+            }
+        }
+
+        // For Player Grid, apply custom Rank logic if button is active
+        if (currentSort === 'playtime') {
+            sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0) - (a.stats?.['minecraft:custom']?.['PLAY_ONE_MINUTE'] || 0));
+        } else if (currentSort === 'mined') {
+            sorted.sort((a, b) => (b.stats?.['total_mined'] || 0) - (a.stats?.['total_mined'] || 0));
+        } else if (currentSort === 'kills') {
+            sorted.sort((a, b) => (b.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0) - (a.stats?.['minecraft:custom']?.['PLAYER_KILLS'] || 0));
+        } else {
+            sorted.sort((a, b) => {
+                // ONLY prioritize Rank if button is active and we are in Grid
+                if (rankedOnly) {
+                    const rA = Number(a.ranked || 999);
+                    const rB = Number(b.ranked || 999);
+                    if (rA < 999 || rB < 999) return rA - rB;
+                }
+                return calculateElo(b) - calculateElo(a);
+            });
+        }
+
+        if (rankedOnly) {
+            sorted = sorted.filter(p => (p.ranked || 0) > 0);
+        }
+
         return sorted;
     }
 
@@ -702,6 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (badgesEl) {
                 const isOnline = player.online;
                 badgesEl.innerHTML = `
+                    ${(player.ranked || 0) > 0 ? `<span class="elo-rank-pill" style="color:#fbbf24; border-color:#fbbf2444; background:#fbbf2411"><i class="fa-solid fa-crown"></i> Ranked #${player.ranked}</span>` : ''}
                     <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                     <span class="leader-status" style="font-size: 11px;">${isOnline ? '● Active' : '○ Offline'}</span>
                 `;
@@ -710,10 +770,23 @@ document.addEventListener('DOMContentLoaded', () => {
             // 3. Hero Stats
             const heroElo = document.getElementById('hero-elo');
             if (heroElo) heroElo.textContent = elo;
+            const heroRankName = document.getElementById('hero-rank-name');
+            if (heroRankName) heroRankName.textContent = eloRank.name + ' Rank';
+            
             const heroRankEl = document.getElementById('hero-rank');
             if (heroRankEl) heroRankEl.textContent = '#' + currentRank;
-            const heroEnergy = document.getElementById('hero-energy');
-            if (heroEnergy) heroEnergy.textContent = player.energy || 0;
+            
+            const heroStrength = document.getElementById('hero-strength');
+            const heroStrengthStatus = document.getElementById('hero-strength-status');
+            if (heroStrength) heroStrength.textContent = player.strength || 0;
+            if (heroStrengthStatus) heroStrengthStatus.textContent = (player.strength || 0) === 5 ? 'MAX LEVEL' : 'Strength Boost';
+            
+            const heroWeapon = document.getElementById('hero-weapon');
+            const heroWeaponIcon = document.getElementById('hero-weapon-icon');
+            if (heroWeapon) heroWeapon.textContent = player.weapon || 'None';
+            if (heroWeaponIcon) {
+                heroWeaponIcon.className = 'fa-solid ' + getWeaponIcon(player.weapon);
+            }
 
             // 4. General Stats
             const stats = player.stats || {};
@@ -774,7 +847,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const logs = player.elo_logs || []; // Now Objects from Java
                 let temp = currentElo;
                 const historyData = [temp]; 
+                const historyTime = [Math.floor(Date.now() / 1000)];
                 const rankHistory = [];
+                const rankTime = [];
                 
                 // Backtrack from current ELO (logs are latest first from Java)
                 for (let i = 0; i < logs.length; i++) {
@@ -784,14 +859,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         const rk = parseInt(log.rank || 0);
                         temp -= change;
                         historyData.unshift(temp); 
-                        if (rk > 0) rankHistory.unshift(rk); 
+                        historyTime.unshift(log.time);
+                        if (rk > 0) {
+                            rankHistory.unshift(rk);
+                            rankTime.unshift(log.time);
+                        }
                     } catch(e) {}
                 }
                 
                 // Smart fallback for empty history
                 if (historyData.length < 2) {
                     historyData.unshift(currentElo); 
-                    historyData.unshift(currentElo); 
+                    historyTime.unshift(historyTime[0] - 86400); // 1 day ago fallback
                 }
 
                 const sortedP = [...players].sort((a, b) => (b.elo || 0) - (a.elo || 0));
@@ -799,10 +878,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Append current rank to the end of history
                 rankHistory.push(currentRank);
+                rankTime.push(Math.floor(Date.now() / 1000));
                 
                 // If still empty (legacy logs), make a flat line
                 if (rankHistory.length === 1) {
                     rankHistory.unshift(currentRank);
+                    rankTime.unshift(rankTime[0] - 86400);
                 }
                 
                 svgElo.setAttribute('viewBox', `0 0 1000 100`);
@@ -815,11 +896,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const curve = getBezierCurve(pts);
                 
                 // Helper to render interactive slices
-                const renderSlices = (pList, dataArr, unit, cId) => pList.map((p, i) => {
+                const renderSlices = (pList, dataArr, timeArr, unit, cId) => pList.map((p, i) => {
                     const w = 1000 / pList.length;
+                    const d = new Date(timeArr[i] * 1000);
+                    const timeStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    const tooltipHtml = `<div style="font-weight:800; color:var(--primary); font-size:14px;">${dataArr[i]} ${unit}</div><div style="font-size:10px; opacity:0.6; margin-top:2px;">${timeStr}</div>`;
+                    
                     return `<rect class="chart-slice" x="${p.x - w/2}" y="0" width="${w}" height="100" 
                         fill="transparent" stroke="none" 
-                        onmouseenter="handleChartHover(event, '${cId}', '${dataArr[i]} ${unit}', ${p.x})" 
+                        onmouseenter="handleChartHover(event, '${cId}', '${tooltipHtml.replace(/"/g, '&quot;')}', ${p.x})" 
                         onmouseleave="hideChartHover('${cId}')"></rect>`;
                 }).join('');
 
@@ -828,7 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <path d="${curve} L 1000,100 L 0,100 Z" fill="url(#gElo)" stroke="none"></path>
                     <path d="${curve}" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round"></path>
                     ${pts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#111" stroke="var(--primary)" stroke-width="2"></circle>`).join('')}
-                    ${renderSlices(pts, historyData.map(Math.round), 'ELO', 'crosshair-elo')}
+                    ${renderSlices(pts, historyData.map(Math.round), historyTime, 'ELO', 'crosshair-elo')}
                 `;
 
                 const svgRank = document.getElementById('svg-rank-progression');
@@ -845,7 +930,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     svgRank.innerHTML = `
                         <path d="${rCurve}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 4" stroke-linecap="round"></path>
                         ${rPts.map((p, i) => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#111" stroke="#60a5fa" stroke-width="1.5"></circle>`).join('')}
-                        ${renderSlices(rPts, rankHistory.map(r => 'Rank #' + r), '', 'crosshair-rank')}
+                        ${renderSlices(rPts, rankHistory.map(r => 'Rank #' + r), rankTime, '', 'crosshair-rank')}
                     `;
                 }
             }
@@ -1046,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'health') {
             navHealth.classList.add('active'); 
             healthSection.style.display = 'block'; 
-            setTimeout(renderTripleGraphs, 100);
+            setTimeout(renderQuadGraphs, 100);
         } else if (tab === 'faq') {
             navFaq.classList.add('active');
             faqSection.style.display = 'block';
@@ -1070,6 +1155,15 @@ document.addEventListener('DOMContentLoaded', () => {
     closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
+
+    const btnFilterRanked = document.getElementById('btn-filter-ranked');
+    if (btnFilterRanked) {
+        btnFilterRanked.addEventListener('click', () => {
+            rankedOnly = !rankedOnly;
+            btnFilterRanked.classList.toggle('active', rankedOnly);
+            renderAll();
+        });
+    }
 
     // Search: re-render instantly as you type
     searchInput.addEventListener('input', () => {
@@ -1258,6 +1352,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 cardClass += ' event-card-rankdown'; 
                 icon = '<i class="fa-solid fa-angles-down"></i>'; 
                 valueStr = `<span style="opacity: 0.7; font-size: 0.9rem;">RANK DOWN:</span> ${log.details}`;
+            } else if (log.type === 'STEAL') {
+                cardClass += ' event-card-steal';
+                icon = '<i class="fa-solid fa-crown" style="color:#fbbf24;"></i>';
+                valueStr = `<span style="color:#fbbf24; font-weight:800;">RANK STEAL:</span> ${log.details}`;
+            } else if (log.type === 'WHITELISTED') {
+                cardClass += ' event-card-whitelist';
+                icon = '<i class="fa-solid fa-user-plus" style="color:#3b82f6;"></i>';
+                valueStr = `<span style="color:#3b82f6; font-weight:800;">WHITELISTED:</span> ${log.details}`;
             } else if (log.change >= 0) {
                 cardClass += ' event-card-gain'; icon = '<i class="fa-solid fa-arrow-trend-up"></i>'; valueStr = '+' + log.change + ' Elo';
             } else {
@@ -1275,5 +1377,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="event-value">${valueStr}</div>
             </div>`;
         }).join('');
+    }
+
+    function getWeaponIcon(weapon) {
+        if (!weapon || weapon === 'None') return 'fa-shield-halved';
+        const w = weapon.toLowerCase();
+        if (w.includes('sword')) return 'fa-shield-halved'; // fa-khanda is Pro, sticking to free
+        if (w.includes('axe')) return 'fa-gavel'; // free alternative to fa-axe
+        if (w.includes('bow')) return 'fa-location-arrow'; // free alternative to fa-bow-arrow
+        if (w.includes('trident')) return 'fa-anchor'; // free alternative to fa-trident
+        if (w.includes('crossbow')) return 'fa-bullseye';
+        if (w.includes('mace')) return 'fa-hammer';
+        return 'fa-shield-halved';
     }
 });

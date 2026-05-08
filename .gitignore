@@ -1,0 +1,18 @@
+# Git Ignore for Minecraft Dashboard
+
+# Large profiler data
+spark/
+*.hprof
+*.jfr
+*.so.tmp
+
+# Build artifacts
+plugin/target/
+plugin/jdk/
+plugin/maven/
+plugin/bin/
+*.jar
+
+# OS files
+.DS_Store
+Thumbs.db

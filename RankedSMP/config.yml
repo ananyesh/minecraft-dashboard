@@ -1,0 +1,58 @@
+# ╔═══════════════════════════════════════════════════════════════╗
+# ║                    RankedSMP Configuration                    ║
+# ║              Made by Lusik21556 (@lusik_2155)                 ║
+# ╚═══════════════════════════════════════════════════════════════╝
+
+# Plugin Hooks
+hooks:
+  AltarSMP: false # Made by Fudum
+  TAB: false
+  PlaceholderAPI: false
+
+# Gameplay Settings
+gameplay:
+  keep-ranks: false # If true, ranks cannot be stolen through PvP kills
+
+
+# Player ranks are stored here (automatic)
+players:
+  40389dc8-201d-39d3-bfcd-d27a58bea8f6:
+    rank: 19
+  8fe384f4-11b3-353e-86fd-cbc4d9597e2b:
+    rank: 8
+  e8cb03e9-87b0-3901-94e3-e22005c058b4:
+    rank: 16
+  f104cd87-5488-36ca-b661-cb7cf4f8fd73:
+    rank: 17
+  4e2a1822-9a56-3ee8-bb48-f21a5290b420:
+    rank: 6
+  06a3b37f-dbeb-387b-bfd8-055498452a1e:
+    rank: 1
+  acc4f093-16ec-3923-9f55-c78b5a8e4ce9:
+    rank: 13
+  dedd752e-08f1-3f33-8563-414ee76d419a:
+    rank: 7
+  bc740979-8f51-383e-924a-498546df7d27:
+    rank: 9
+  3a93569b-2e20-3115-91bf-16d51d67a636:
+    rank: 11
+  3ee2f2d2-8fa9-3af1-9f13-6136a48e00ec:
+    rank: 3
+  9afaae40-4f97-3482-9846-d510caef6ee1:
+    rank: 2
+  4004824b-4597-37b9-9aa7-3d0f985126ff:
+    rank: 18
+  ccde3eb9-fec5-36c1-9d87-3204da7e15ff:
+    rank: 15
+  872f90db-70e2-321a-9ce3-ccfc2a26d371:
+    rank: 14
+  1e6184ee-597b-3550-ad5e-117bd996f410:
+    rank: 12
+  0b2e13e4-b1b0-3443-9bc5-379cd14bb0c9:
+    rank: 10
+  4d3cfbe1-7ab2-364e-b111-f4bd6ae83afa:
+    rank: 20
+  2df01dbb-7bd5-3ffc-99ba-2b2f5f0919c4:
+    rank: 4
+  843f242f-86fb-35d3-987a-d202d40fee07:
+    rank: 5
