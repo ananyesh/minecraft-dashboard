@@ -416,8 +416,14 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (mspt >= 12.5) msptEl.style.setProperty('color', '#fef08a', 'important'); // Light yellow
             else                     msptEl.style.setProperty('color', '#4ade80', 'important'); // Light green
         }
-        // Color coding - Network (Blue theme)
-        if (netEl) netEl.style.color = '#3b82f6';
+        // Color coding - Network (DDoS Alert System)
+        if (netEl) {
+            if (netTotal >= 200)      netEl.style.setProperty('color', '#ef4444', 'important'); // Critical - Red
+            else if (netTotal >= 100) netEl.style.setProperty('color', '#f97316', 'important'); // Danger - Orange
+            else if (netTotal >= 50)  netEl.style.setProperty('color', '#eab308', 'important'); // Warning - Yellow
+            else if (netTotal >= 10)  netEl.style.setProperty('color', '#06b6d4', 'important'); // Elevated - Cyan
+            else                      netEl.style.setProperty('color', '#3b82f6', 'important'); // Normal - Blue
+        }
 
         // Players Online card
         const playersEl = document.getElementById('h-players');
