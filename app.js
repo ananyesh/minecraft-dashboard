@@ -48,6 +48,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // News / Blog Data
     const updates = [
         {
+            date: "May 8, 2026",
+            version: "v3.0",
+            author: "QuartzEngine",
+            handle: "@quartz_smp",
+            avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
+            title: "Sentinel Update: Network & Discord",
+            desc: "The ultimate security and community update. Introducing real-time DDoS detection and automated Discord whitelisting.",
+            features: ["Network DDoS Monitor", "Discord Bot Whitelist", "Traffic Alert Colors", "Live Bandwidth Chart"],
+            content: `
+                <h2>Network Sentinel System</h2>
+                <p>We've deployed a state-of-the-art <strong>Network Monitoring Engine</strong> directly on the server. You can now see real-time bandwidth usage (Mbps) on the dashboard.</p>
+                <p>A new <strong>DDoS Alert System</strong> has been integrated—the network gauge will change color from blue to bright red if it detects malicious traffic, allowing us to respond to attacks instantly.</p>
+                
+                <h2>Discord Whitelist Automation</h2>
+                <p>Joining the server has never been easier. We've introduced a custom <strong>Discord Whitelist Bot</strong>. Simply type your username in the designated channel, and you'll be whitelisted automatically.</p>
+                <p>This system includes "One Account per User" protection to ensure a fair and stable community environment.</p>
+            `
+        },
+        {
             date: "April 25, 2026",
             version: "v2.0",
             author: "ananyesh",
