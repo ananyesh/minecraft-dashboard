@@ -168,6 +168,15 @@ public class WebStats extends JavaPlugin implements Listener {
                             return;
                         }
 
+                        // Rule: One Discord user per IGN (Prevent stealing)
+                        for (String key : whitelistConfig.getKeys(false)) {
+                            if (whitelistConfig.getString(key, "").equalsIgnoreCase(message)) {
+                                event.getMessage().addReaction(net.dv8tion.jda.api.entities.emoji.Emoji.fromUnicode("❌")).queue();
+                                event.getChannel().sendMessage("❌ " + event.getAuthor().getAsMention() + ", the account **" + message + "** is already whitelisted by another user.").queue();
+                                return;
+                            }
+                        }
+
                         // Whitelist the user
                         whitelistConfig.set(discordId, message);
                         saveWhitelist();
@@ -367,6 +376,7 @@ public class WebStats extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
+        if (!getConfig().getBoolean("ranked-enabled", true)) return;
         Player victim = event.getEntity();
         if (victim.getKiller() != null) {
             Player killer = victim.getKiller();
@@ -544,7 +554,9 @@ public class WebStats extends JavaPlugin implements Listener {
 
         String uuid = player.getUniqueId().toString();
         String skin = player.getName();
-        int elo = getElo(player.getUniqueId());
+        
+        boolean rankedEnabled = getConfig().getBoolean("ranked-enabled", true);
+        int elo = rankedEnabled ? getElo(player.getUniqueId()) : 0;
         
         int mined = 0;
         int placed = 0;
@@ -559,7 +571,7 @@ public class WebStats extends JavaPlugin implements Listener {
 
         int strength = getSkriptValue("strength::" + uuid, 0);
         String weapon = getSkriptString("weapon::" + uuid, "None");
-        int rankedRank = getRankedSMPRank(uuid);
+        int rankedRank = rankedEnabled ? getRankedSMPRank(uuid) : 0;
 
         StringBuilder json = new StringBuilder("{");
         json.append("\"username\":\"").append(player.getName()).append("\",")
