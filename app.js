@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', () => {
     // Master Dashboard Configuration
     const DASHBOARD_CONFIG = {
         ranked_enabled: true, // Set to false to hide all Ranked/ELO stats across the site
