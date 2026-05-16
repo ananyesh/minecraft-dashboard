@@ -63,20 +63,23 @@
     const updates = [
         {
             date: "May 16, 2026",
-            version: "v3.6",
+            version: "v3.7",
             author: "QuartzEngine",
             handle: "@quartz_smp",
             avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
-            title: "Sentinel v3.6: Network & Discord",
-            desc: "The ultimate security and community update. Introducing the 'One-User' Whitelist and Master Ranked Control.",
-            features: ["Discord 'Lock-In' Whitelist", "Master Ranked Toggle", "DDoS Network Monitor", "GPU-Accelerated Dashboard"],
+            title: "Sentinel v3.7: Official Release",
+            desc: "The definitive security and community update. Feature-complete Discord 'Lock-In' and Ranked Integration.",
+            features: ["Finalized Discord Whitelist", "Optimized Ranked Toggle", "DDoS-Shield Network Stats", "Enhanced Dashboard Stability"],
             content: `
-                <h2>Network Sentinel & Whitelist v3.6</h2>
-                <p>We've deployed a massive update to the <strong>Network Monitoring Engine</strong>. You can now see real-time bandwidth usage (Mbps) on the dashboard with full DDoS protection colors.</p>
+                <h2>Sentinel v3.7 Official Launch</h2>
+                <p>We are proud to announce the stable release of <strong>Sentinel v3.7</strong>. This version finalizes our core security protocols and community integration tools.</p>
                 
-                <h2>Secure Discord Whitelist</h2>
-                <p>Our new <strong>Discord Whitelist Bot</strong> is now live with "Lock-In" protection. Once you link your Minecraft account to your Discord profile, it's permanent. This prevents account theft and ensures a fair community.</p>
-                <p>The bot now supports ✅/❌ reactions for instant feedback directly in Discord.</p>
+                <h2>What's New in v3.7?</h2>
+                <ul>
+                    <li><strong>Account Binding:</strong> Your Discord profile is now permanently linked to your Minecraft IGN for maximum security.</li>
+                    <li><strong>Ranked Flexibility:</strong> Server owners can now toggle Ranked integration without affecting core ELO and Kill telemetry.</li>
+                    <li><strong>Telemetry Engine:</strong> Optimized for high-frequency updates with zero dashboard lag.</li>
+                </ul>
             `
         },
         {
