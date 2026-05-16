@@ -103,6 +103,25 @@
             </header>
 
             <div class="viewport">
+                <!-- Global Summary Row (Matches, Net Elo, Top Rank) - ALWAYS VISIBLE -->
+                <div class="global-summary-row stagger-1">
+                    <div class="summary-card-premium">
+                        <span class="s-label">MATCHES</span>
+                        <span class="s-value" id="global-matches">0</span>
+                        <span class="s-sub" id="global-winloss">0W - 0L</span>
+                    </div>
+                    <div class="summary-card-premium">
+                        <span class="s-label">NET ELO</span>
+                        <span class="s-value" id="global-net-elo">+0</span>
+                        <span class="s-sub">today</span>
+                    </div>
+                    <div class="summary-card-premium">
+                        <span class="s-label">TOP RANK</span>
+                        <span class="s-value" id="global-top-rank">#1</span>
+                        <span class="s-sub" id="global-top-name">---</span>
+                    </div>
+                </div>
+
                 <!-- Players Grid -->
                 <section id="players-section">
                     <div class="section-title">
@@ -136,24 +155,6 @@
                         </div>
                     </div>
 
-                    <!-- Global Summary Row (Matches, Net Elo, Top Rank) -->
-                    <div class="global-summary-row stagger-1">
-                        <div class="summary-card-premium">
-                            <span class="s-label">MATCHES</span>
-                            <span class="s-value" id="global-matches">0</span>
-                            <span class="s-sub" id="global-winloss">0W - 0L</span>
-                        </div>
-                        <div class="summary-card-premium">
-                            <span class="s-label">NET ELO</span>
-                            <span class="s-value" id="global-net-elo">+0</span>
-                            <span class="s-sub">today</span>
-                        </div>
-                        <div class="summary-card-premium">
-                            <span class="s-label">TOP RANK</span>
-                            <span class="s-value" id="global-top-rank">#1</span>
-                            <span class="s-sub" id="global-top-name">---</span>
-                        </div>
-                    </div>
 
                     <div class="player-grid" id="leaderboard-grid">
                         <div class="loading-state"><div class="spinner"></div><p>Calculating rankings...</p></div>
