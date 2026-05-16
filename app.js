@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newLogs = logs.filter(l => l.time > lastSeenLogTime).reverse();
             newLogs.forEach(log => {
                 showToast(log);
+            });
             // Real-time update for Global Summary Cards (Matches, Net Elo, Top Rank)
             updateGlobalCompetitionSummary();
 
