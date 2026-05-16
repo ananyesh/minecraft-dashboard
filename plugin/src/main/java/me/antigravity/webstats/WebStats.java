@@ -376,7 +376,6 @@ public class WebStats extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerDeath(org.bukkit.event.entity.PlayerDeathEvent event) {
-        if (!getConfig().getBoolean("ranked-enabled", true)) return;
         Player victim = event.getEntity();
         if (victim.getKiller() != null) {
             Player killer = victim.getKiller();
@@ -554,9 +553,7 @@ public class WebStats extends JavaPlugin implements Listener {
 
         String uuid = player.getUniqueId().toString();
         String skin = player.getName();
-        
-        boolean rankedEnabled = getConfig().getBoolean("ranked-enabled", true);
-        int elo = rankedEnabled ? getElo(player.getUniqueId()) : 0;
+        int elo = getElo(player.getUniqueId());
         
         int mined = 0;
         int placed = 0;
@@ -571,7 +568,7 @@ public class WebStats extends JavaPlugin implements Listener {
 
         int strength = getSkriptValue("strength::" + uuid, 0);
         String weapon = getSkriptString("weapon::" + uuid, "None");
-        int rankedRank = rankedEnabled ? getRankedSMPRank(uuid) : 0;
+        int rankedRank = getConfig().getBoolean("ranked-enabled", true) ? getRankedSMPRank(uuid) : 0;
 
         StringBuilder json = new StringBuilder("{");
         json.append("\"username\":\"").append(player.getName()).append("\",")
