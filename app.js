@@ -673,10 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
      * Leaderboard Tab: Ranked List View
      */
     function renderLeaderboard() {
-        if (!DASHBOARD_CONFIG.ranked_enabled) {
-            playerGrid.innerHTML = '<div class="loading-state"><i class="fa-solid fa-trophy" style="font-size:3rem; margin-bottom:1rem; opacity:0.2;"></i><p>The Ranked Season is currently inactive.</p></div>';
-            return;
-        }
         const sorted = getSortedPlayers(true);
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
 
