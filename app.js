@@ -48,13 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const hAvgTPS = document.getElementById('h-avg-tps');
     const hAvgMSPT = document.getElementById('h-avg-mspt');
 
-    const navPlayers = document.getElementById('nav-players');
-    const navLeaderboards = document.getElementById('nav-leaderboards');
-    const navHealth = document.getElementById('nav-health');
+    const navFaq = document.getElementById('nav-faq');
+    const navEvents = document.getElementById('nav-events');
+    const btnFilterRanked = document.getElementById('btn-filter-ranked');
 
-    // Hide Leaderboard Nav if Ranked is disabled
-    if (navLeaderboards && !DASHBOARD_CONFIG.ranked_enabled) {
-        navLeaderboards.style.display = 'none';
+    // Hide Ranked UI if disabled
+    if (!DASHBOARD_CONFIG.ranked_enabled) {
+        if (navLeaderboards) navLeaderboards.style.display = 'none';
+        if (btnFilterRanked) btnFilterRanked.style.display = 'none';
     }
     const navUpdates = document.getElementById('nav-updates');
     const navFaq = document.getElementById('nav-faq');
