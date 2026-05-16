@@ -144,7 +144,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(log);
                 lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
             });
+            
+            // Real-time update for Global Summary Cards (Matches, Net Elo, Top Rank)
+            updateGlobalCompetitionSummary();
         } catch(e) {}
+    }
+
+    function updateGlobalCompetitionSummary() {
+        if (!liveLogs || !Array.isArray(liveLogs)) return;
+        
+        const todayStart = new Date().setHours(0,0,0,0) / 1000;
+        const dailyLogs = liveLogs.filter(l => l.time >= todayStart);
+        
+        const totalMatches = dailyLogs.filter(l => l.change !== 0).length;
+        const totalWins = dailyLogs.filter(l => l.change > 0).length;
+        const totalLosses = dailyLogs.filter(l => l.change < 0).length;
+        const netElo = dailyLogs.reduce((sum, l) => sum + (l.change || 0), 0);
+        
+        const sorted = getSortedPlayers(true);
+        const topPlayer = sorted[0];
+
+        const elMatches = document.getElementById('global-matches');
+        const elWinLoss = document.getElementById('global-winloss');
+        const elNetElo = document.getElementById('global-net-elo');
+        const elTopRank = document.getElementById('global-top-rank');
+        const elTopName = document.getElementById('global-top-name');
+
+        if (elMatches) elMatches.textContent = totalMatches;
+        if (elWinLoss) elWinLoss.textContent = `${totalWins}W - ${totalLosses}L`;
+        if (elNetElo) {
+            elNetElo.textContent = (netElo >= 0 ? '+' : '') + netElo;
+            elNetElo.style.color = netElo >= 0 ? '#38bdf8' : '#ef4444';
+        }
+        if (elTopRank) elTopRank.textContent = '#1';
+        if (elTopName) elTopName.textContent = topPlayer ? topPlayer.username : '---';
     }
 
     function showToast(log) {
@@ -480,29 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
 
         // --- Calculate Global Competition Summary (Power Trio) ---
-        const todayStart = new Date().setHours(0,0,0,0) / 1000;
-        const dailyLogs = liveLogs.filter(l => l.time >= todayStart);
-        
-        const totalMatches = dailyLogs.filter(l => l.change !== 0).length;
-        const totalWins = dailyLogs.filter(l => l.change > 0).length;
-        const totalLosses = dailyLogs.filter(l => l.change < 0).length;
-        const netElo = dailyLogs.reduce((sum, l) => sum + (l.change || 0), 0);
-        const topPlayer = sorted[0];
-
-        const elMatches = document.getElementById('global-matches');
-        const elWinLoss = document.getElementById('global-winloss');
-        const elNetElo = document.getElementById('global-net-elo');
-        const elTopRank = document.getElementById('global-top-rank');
-        const elTopName = document.getElementById('global-top-name');
-
-        if (elMatches) elMatches.textContent = totalMatches;
-        if (elWinLoss) elWinLoss.textContent = `${totalWins}W - ${totalLosses}L`;
-        if (elNetElo) {
-            elNetElo.textContent = (netElo >= 0 ? '+' : '') + netElo;
-            elNetElo.style.color = netElo >= 0 ? '#38bdf8' : '#ef4444';
-        }
-        if (elTopRank) elTopRank.textContent = '#1';
-        if (elTopName) elTopName.textContent = topPlayer ? topPlayer.username : '---';
+        updateGlobalCompetitionSummary();
         // ---------------------------------------------------------
 
         let currentRank = 1;
