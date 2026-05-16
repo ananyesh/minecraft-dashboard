@@ -58,8 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnFilterRanked) btnFilterRanked.style.display = 'none';
     }
     const navUpdates = document.getElementById('nav-updates');
-    const navFaq = document.getElementById('nav-faq');
-    const navEvents = document.getElementById('nav-events');
 
     // News / Blog Data
     const updates = [
