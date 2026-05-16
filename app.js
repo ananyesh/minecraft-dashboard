@@ -1214,7 +1214,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sortBySelect.addEventListener('change', (e) => { currentSort = e.target.value; renderAll(); });
     refreshBtn.addEventListener('click', updateAllData);
 
-    const btnFilterRanked = document.getElementById('btn-filter-ranked');
     if (btnFilterRanked) {
         btnFilterRanked.addEventListener('click', () => {
             rankedOnly = !rankedOnly;
