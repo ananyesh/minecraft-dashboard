@@ -594,9 +594,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="p-stat-item" title="Deaths"><i class="fa-solid fa-ghost"></i> <span class="p-stat-val">${custom['DEATHS'] || 0}</span></div>
                         <div class="p-stat-item" title="Playtime"><i class="fa-solid fa-clock"></i> <span class="p-stat-val">${Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60)}h</span></div>
                     </div>
-                    <div class="p-weapon-badge" style="margin-top:8px; font-size:10px; opacity:0.8;">
-                        <i class="fa-solid ${getWeaponIcon(player.weapon)}"></i> <span class="lab">Weapon:</span> <span class="val" style="font-weight:700;">${player.weapon || 'None'}</span>
-                    </div>
                     <div class="p-rank-badge" style="margin-top:12px; color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
                         ${getRank(calculateElo(player)).icon} ${getRank(calculateElo(player)).name}
                     </div>
@@ -791,10 +788,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // 3. Hero Stats
             const heroElo = document.getElementById('hero-elo');
             const heroRankName = document.getElementById('hero-rank-name');
-            const heroRankEl = document.getElementById('hero-rank');
-            const heroWeapon = document.getElementById('hero-weapon');
-            const heroWeaponIcon = document.getElementById('hero-weapon-icon');
-
             const isRanked = (player.ranked || 0) > 0;
             
             // Hide/Show Ranked Hero Cards
@@ -806,11 +799,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (heroRankEl) {
                 heroRankEl.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
                 heroRankEl.textContent = '#' + currentRank;
-            }
-            
-            if (heroWeapon) heroWeapon.textContent = player.weapon || 'None';
-            if (heroWeaponIcon) {
-                heroWeaponIcon.className = 'fa-solid ' + getWeaponIcon(player.weapon);
             }
 
             // 4. General Stats
