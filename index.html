@@ -216,7 +216,55 @@
                             <p>24-hour high-fidelity timeline tracking for server cluster.</p>
                         </div>
                     </div>
-                    
+                    <div class="health-grid-premium">
+                        <div class="health-card-premium">
+                            <div class="h-card-header">
+                                <span class="h-label">CURRENT TPS</span>
+                                <i class="fa-solid fa-gauge-high h-icon-neon" style="color: var(--online)"></i>
+                            </div>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-tps">20</span>
+                            </div>
+                            <div class="h-sub">Target: 20.0 TPS</div>
+                            <div class="h-trend up"><i class="fa-solid fa-arrow-up"></i> 0%</div>
+                        </div>
+                        <div class="health-card-premium">
+                            <div class="h-card-header">
+                                <span class="h-label">CURRENT MSPT</span>
+                                <i class="fa-solid fa-bolt h-icon-neon" style="color: var(--mspt-color)"></i>
+                            </div>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-mspt">0</span>
+                                <span class="h-unit">ms</span>
+                            </div>
+                            <div class="h-sub">Lower is better</div>
+                            <div class="h-trend up"><i class="fa-solid fa-arrow-up"></i> 0%</div>
+                        </div>
+                        <div class="health-card-premium">
+                            <div class="h-card-header">
+                                <span class="h-label">AVERAGE TPS (24H)</span>
+                                <i class="fa-solid fa-clock-rotate-left h-icon-neon" style="color: var(--secondary)"></i>
+                            </div>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-avg-tps">20</span>
+                            </div>
+                            <div class="h-sub">Over the last day</div>
+                            <div class="h-trend up"><i class="fa-solid fa-arrow-up"></i> 0%</div>
+                        </div>
+                        <div class="health-card-premium">
+                            <div class="h-card-header">
+                                <span class="h-label">AVERAGE MSPT (24H)</span>
+                                <i class="fa-solid fa-chart-line h-icon-neon" style="color: var(--secondary)"></i>
+                            </div>
+                            <div class="h-value-row">
+                                <span class="h-value odometer" id="h-avg-mspt">0</span>
+                                <span class="h-unit">ms</span>
+                            </div>
+                            <div class="h-sub">Over the last day</div>
+                            <div class="h-trend up"><i class="fa-solid fa-arrow-up"></i> 0%</div>
+                        </div>
+                    </div>
+
                     <div class="summary-title">24-HOUR METRICS SUMMARY</div>
                     <div class="metrics-summary-grid">
                         <div class="metric-summary-card">

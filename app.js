@@ -417,9 +417,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const netOut = serverHealth.net_out || 0;
         const netTotal = netIn + netOut;
 
+        const tpsEl = document.getElementById('h-tps');
+        const msptEl = document.getElementById('h-mspt');
+        const hAvgTPS = document.getElementById('h-avg-tps');
+        const hAvgMSPT = document.getElementById('h-avg-mspt');
+
         // Calculate 24h Summary Data
         const history = playerHistory || [];
         const recentHistory = history.slice(-288); // Approx 24h
+
+        const avgTpsVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.t || 20), 0) / recentHistory.length : tps;
+        const avgMsptVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.m || 0), 0) / recentHistory.length : mspt;
 
         const peakTpsVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => h.t || 0)) : tps;
         const lowTpsVal = recentHistory.length > 0 ? Math.min(...recentHistory.map(h => h.t || 20)) : tps;
@@ -428,7 +436,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const peakPlayersVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => h.p || 0)) : players.filter(p => p.online).length;
         const peakNetVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => (h.ni || 0) + (h.no || 0))) : netTotal;
 
-        // Update Summary Grid
+        // 1. Update Odometer Cards (Real-time & Averages)
+        if (typeof Odometer !== 'undefined') {
+            if (!tpsOdo && tpsEl) tpsOdo = new Odometer({ el: tpsEl, value: tps, format: 'd', theme: 'minimal', duration: 800 });
+            if (!msptOdo && msptEl) msptOdo = new Odometer({ el: msptEl, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
+            if (!avgTpsOdo && hAvgTPS) avgTpsOdo = new Odometer({ el: hAvgTPS, value: avgTpsVal, format: 'd', theme: 'minimal', duration: 800 });
+            if (!avgMsptOdo && hAvgMSPT) avgMsptOdo = new Odometer({ el: hAvgMSPT, value: avgMsptVal, format: 'd', theme: 'minimal', duration: 800 });
+
+            if (tpsOdo) tpsOdo.update(Math.round(tps));
+            if (msptOdo) msptOdo.update(Math.round(mspt));
+            if (avgTpsOdo) avgTpsOdo.update(Math.round(avgTpsVal));
+            if (avgMsptOdo) avgMsptOdo.update(Math.round(avgMsptVal));
+        } else {
+            if (tpsEl) tpsEl.textContent = tps.toFixed(1);
+            if (msptEl) msptEl.textContent = Math.round(mspt);
+            if (hAvgTPS) hAvgTPS.textContent = avgTpsVal.toFixed(1);
+            if (hAvgMSPT) hAvgMSPT.textContent = Math.round(avgMsptVal);
+        }
+
+        // 2. Update Summary Grid (Peaks/Lows)
         const elPeakTps = document.getElementById('peak-tps');
         const elLowTps = document.getElementById('low-tps');
         const elPeakMspt = document.getElementById('peak-mspt');
