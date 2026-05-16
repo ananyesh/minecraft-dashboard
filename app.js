@@ -605,10 +605,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="p-stat-item" title="Deaths"><i class="fa-solid fa-ghost"></i> <span class="p-stat-val">${custom['DEATHS'] || 0}</span></div>
                         <div class="p-stat-item" title="Playtime"><i class="fa-solid fa-clock"></i> <span class="p-stat-val">${Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60)}h</span></div>
                     </div>
-                    ${DASHBOARD_CONFIG.ranked_enabled ? `
                     <div class="p-rank-badge" style="margin-top:12px; color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
                         ${getRank(calculateElo(player)).icon} ${getRank(calculateElo(player)).name}
-                    </div>` : ''}
+                    </div>
                 </div>`;
         }).join('');
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
@@ -795,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (badgesEl) {
                 const isOnline = player.online;
                 badgesEl.innerHTML = `
-                    ${(player.ranked || 0) > 0 ? `<span class="elo-rank-pill" style="color:#fbbf24; border-color:#fbbf2444; background:#fbbf2411"><i class="fa-solid fa-crown"></i> Ranked #${player.ranked}</span>` : ''}
+                    ${(player.ranked || 0) > 0 && DASHBOARD_CONFIG.ranked_enabled ? `<span class="elo-rank-pill" style="color:#fbbf24; border-color:#fbbf2444; background:#fbbf2411"><i class="fa-solid fa-crown"></i> Ranked #${player.ranked}</span>` : ''}
                     <span class="elo-rank-pill" style="color:${eloRank.color};border-color:${eloRank.color}44;background:${eloRank.color}11">${eloRank.icon} ${eloRank.name}</span>
                     <span class="leader-status" style="font-size: 11px;">${isOnline ? '● Active' : '○ Offline'}</span>
                 `;
@@ -805,13 +804,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const heroElo = document.getElementById('hero-elo');
             const heroRankName = document.getElementById('hero-rank-name');
             const isRanked = (player.ranked || 0) > 0 && DASHBOARD_CONFIG.ranked_enabled;
+            const hasElo = (player.elo || 0) >= 0; // Always show ELO
             
             // Hide/Show Ranked Hero Cards
             if (heroElo) {
-                heroElo.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
+                heroElo.closest('.hero-stat-card').style.display = hasElo ? 'flex' : 'none';
                 heroElo.textContent = elo;
             }
             if (heroRankName) heroRankName.textContent = eloRank.name + ' Rank';
+            const heroRankEl = document.getElementById('hero-rank');
             if (heroRankEl) {
                 heroRankEl.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
                 heroRankEl.textContent = '#' + currentRank;
