@@ -161,8 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    // High-frequency poll for Live Logs
-    setInterval(updateLiveLogs, 5000);
 
 
 
