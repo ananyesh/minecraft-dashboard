@@ -864,9 +864,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 heroElo.textContent = elo;
             }
             if (heroRankName) heroRankName.textContent = eloRank.name + ' Rank';
+            // Show Leaderboard Placement (Always show ELO-based global rank)
             const heroRankEl = document.getElementById('hero-rank');
             if (heroRankEl) {
-                heroRankEl.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
+                heroRankEl.closest('.hero-stat-card').style.display = 'flex';
                 heroRankEl.textContent = '#' + currentRank;
             }
 
