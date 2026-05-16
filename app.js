@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // View Sections
     const playersSection = document.getElementById('players-section');
     const healthSection = document.getElementById('health-section');
-    const updatesSection = document.getElementById('updates-section');
     const faqSection = document.getElementById('faq-section');
     const eventsSection = document.getElementById('events-section');
     
@@ -60,8 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnFilterRanked) btnFilterRanked.style.display = 'none';
     }
 
-    const blogReader = document.getElementById('blog-reader-overlay');
-    const articleContainer = document.getElementById('blog-article-content');
 
     /**
      * Data Sync
@@ -202,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTab === 'players') renderPlayersGrid();
         else if (currentTab === 'leaderboard') renderLeaderboard();
         else if (currentTab === 'faq') renderFaq();
-        else if (currentTab === 'updates') renderUpdates();
         else if (currentTab === 'events') renderEvents();
         
         renderHealthStatus();
@@ -966,67 +962,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderFaq() {} // FAQ is static HTML, no JS rendering needed
 
-    function renderUpdates() {
-        const feed = document.getElementById('blog-feed');
-        if (!feed) return;
-        feed.innerHTML = updates.map((u, i) => `
-            <div class="update-card" onclick="openBlogReader(${i})" style="animation: fadeIn 0.4s ease forwards; cursor: pointer;">
-                <span class="update-date">${u.date}</span>
-                <h3 class="update-title">${u.title} <span class="update-version">${u.version}</span></h3>
-                <p class="update-desc">${u.desc}</p>
-                <div class="update-features">
-                    ${u.features.map(f => `<span class="u-feat">${f}</span>`).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
 
-    window.openBlogReader = function(index) {
-        const post = updates[index];
-        if (!post) return;
-        
-        // Generate Table of Contents from h2 tags
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = post.content;
-        const headings = Array.from(tempDiv.querySelectorAll('h2')).map(h => h.innerText);
-        
-        articleContainer.innerHTML = `
-            <header class="article-header">
-                <span class="update-date">${post.date}</span>
-                <h1 class="article-title">${post.title}</h1>
-                
-                <div class="author-block">
-                    <img src="${post.avatar}" class="author-avatar" alt="${post.author}">
-                    <div class="author-info">
-                        <span class="author-name">${post.author}</span>
-                        <span class="author-handle">${post.handle}</span>
-                    </div>
-                </div>
-
-                <div class="toc-card" id="toc-card">
-                    <div class="toc-header" onclick="document.getElementById('toc-list').classList.toggle('hide')">
-                        <span>Table of Contents</span>
-                        <i class="fa-solid fa-chevron-down"></i>
-                    </div>
-                    <div class="toc-content hide" id="toc-list">
-                        ${headings.map(h => `<a href="#" class="toc-link" onclick="event.preventDefault(); document.getElementById('blog-reader-overlay').scrollTo({top:0, behavior:'smooth'})">${h}</a>`).join('')}
-                    </div>
-                </div>
-            </header>
-            
-            <div class="article-body">
-                ${post.content}
-            </div>
-        `;
-        
-        blogReader.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    };
-
-    window.closeBlogReader = function() {
-        blogReader.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    };
 
     function switchTab(tab) {
         currentTab = tab;
@@ -1034,7 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
         playersSection.style.display = 'none';
         healthSection.style.display = 'none';
         faqSection.style.display = 'none';
-        updatesSection.style.display = 'none';
         eventsSection.style.display = 'none';
 
         if (tab === 'players') {
