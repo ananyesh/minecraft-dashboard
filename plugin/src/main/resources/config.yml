@@ -1,6 +1,6 @@
 # WebStats Configuration
 # Dashboard Hosting (Firebase-free)
-web-port: 8080
+web-port: 19148
 
 # Ranked SMP Integration
 # If true, the plugin will look for RankedSMP data and display it on the website.
