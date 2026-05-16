@@ -1,4 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
+    // Master Dashboard Configuration
+    const DASHBOARD_CONFIG = {
+        ranked_enabled: true, // Set to false to hide all Ranked/ELO stats across the site
+        firebase_url: 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/'
+    };
+
     // State Management
     let players = [];
     let serverHealth = { tps: 20, mspt: 0, players_online: 0, players_max: 0 };
@@ -45,6 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const navPlayers = document.getElementById('nav-players');
     const navLeaderboards = document.getElementById('nav-leaderboards');
     const navHealth = document.getElementById('nav-health');
+
+    // Hide Leaderboard Nav if Ranked is disabled
+    if (navLeaderboards && !DASHBOARD_CONFIG.ranked_enabled) {
+        navLeaderboards.style.display = 'none';
+    }
     const navUpdates = document.getElementById('nav-updates');
     const navFaq = document.getElementById('nav-faq');
     const navEvents = document.getElementById('nav-events');
@@ -581,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <div class="player-card ${!player.online ? 'offline-card' : ''}" onclick="showPlayerDetails('${player.uuid}')">
-                    ${(player.ranked || 0) > 0 ? `<div class="p-ranked-badge"><i class="fa-solid fa-crown"></i> Rank #${player.ranked}</div>` : ''}
+                    ${(player.ranked || 0) > 0 && DASHBOARD_CONFIG.ranked_enabled ? `<div class="p-ranked-badge"><i class="fa-solid fa-crown"></i> Rank #${player.ranked}</div>` : ''}
                     <div class="p-avatar"><img src="https://mc-heads.net/avatar/${skinIdentity}/80" alt="${player.username}"></div>
                     <div class="p-name">${player.username}</div>
                     <div class="p-status ${player.online ? 'online' : 'offline'}">
@@ -592,9 +602,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="p-stat-item" title="Deaths"><i class="fa-solid fa-ghost"></i> <span class="p-stat-val">${custom['DEATHS'] || 0}</span></div>
                         <div class="p-stat-item" title="Playtime"><i class="fa-solid fa-clock"></i> <span class="p-stat-val">${Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60)}h</span></div>
                     </div>
+                    ${DASHBOARD_CONFIG.ranked_enabled ? `
                     <div class="p-rank-badge" style="margin-top:12px; color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
                         ${getRank(calculateElo(player)).icon} ${getRank(calculateElo(player)).name}
-                    </div>
+                    </div>` : ''}
                 </div>`;
         }).join('');
         onlineCountLabel.textContent = `${players.filter(p => p.online).length}/${players.length}`;
@@ -604,6 +615,10 @@ document.addEventListener('DOMContentLoaded', () => {
      * Leaderboard Tab: Ranked List View
      */
     function renderLeaderboard() {
+        if (!DASHBOARD_CONFIG.ranked_enabled) {
+            playerGrid.innerHTML = '<div class="loading-state"><i class="fa-solid fa-trophy" style="font-size:3rem; margin-bottom:1rem; opacity:0.2;"></i><p>The Ranked Season is currently inactive.</p></div>';
+            return;
+        }
         const sorted = getSortedPlayers(true);
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
 
@@ -786,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 3. Hero Stats
             const heroElo = document.getElementById('hero-elo');
             const heroRankName = document.getElementById('hero-rank-name');
-            const isRanked = (player.ranked || 0) > 0;
+            const isRanked = (player.ranked || 0) > 0 && DASHBOARD_CONFIG.ranked_enabled;
             
             // Hide/Show Ranked Hero Cards
             if (heroElo) {
