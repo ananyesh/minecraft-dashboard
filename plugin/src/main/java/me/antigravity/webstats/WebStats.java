@@ -28,8 +28,20 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentHashMap;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.net.InetSocketAddress;
 
 public class WebStats extends JavaPlugin implements Listener {
+
+    private HttpServer webServer;
+    private final ConcurrentHashMap<String, String> playerCache = new ConcurrentHashMap<>();
+    private String serverHealthCache = "{}";
+    private String historyCache = "[]";
 
     private String databaseURL;
     private FileConfiguration eloConfig;
@@ -135,8 +147,67 @@ public class WebStats extends JavaPlugin implements Listener {
 
         startTelemetrySync();
         startDiscordBot();
+        startWebServer();
         
-        getLogger().info("WebStats enabled with Discord Whitelist support!");
+        getLogger().info("WebStats enabled! Dashboard hosted on port " + getConfig().getInt("web-port", 8080));
+    }
+
+    private void startWebServer() {
+        int port = getConfig().getInt("web-port", 8080);
+        try {
+            webServer = HttpServer.create(new InetSocketAddress(port), 0);
+            
+            // API Endpoint: Returns all data as one big JSON
+            webServer.createContext("/api/data", exchange -> {
+                StringBuilder json = new StringBuilder("{\"server\":").append(serverHealthCache)
+                    .append(",\"players\":{");
+                boolean first = true;
+                for (java.util.Map.Entry<String, String> entry : playerCache.entrySet()) {
+                    if (!first) json.append(",");
+                    json.append("\"").append(entry.getKey()).append("\":").append(entry.getValue());
+                    first = false;
+                }
+                json.append("},\"history\":").append(historyCache)
+                    .append(",\"live_logs\":[").append(String.join(",", liveLogs)).append("]}");
+                
+                byte[] response = json.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+                exchange.sendResponseHeaders(200, response.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(response); }
+            });
+
+            // File Server: Serves index.html, style.css, app.js from /web folder
+            webServer.createContext("/", exchange -> {
+                String path = exchange.getRequestURI().getPath();
+                if (path.equals("/")) path = "/index.html";
+                
+                File webFolder = new File(getDataFolder(), "web");
+                if (!webFolder.exists()) webFolder.mkdirs();
+                
+                File file = new File(webFolder, path.substring(1));
+                if (file.exists() && file.isFile()) {
+                    String contentType = "text/plain";
+                    if (path.endsWith(".html")) contentType = "text/html";
+                    else if (path.endsWith(".css")) contentType = "text/css";
+                    else if (path.endsWith(".js")) contentType = "application/javascript";
+                    
+                    byte[] response = Files.readAllBytes(file.toPath());
+                    exchange.getResponseHeaders().set("Content-Type", contentType);
+                    exchange.sendResponseHeaders(200, response.length);
+                    try (OutputStream os = exchange.getResponseBody()) { os.write(response); }
+                } else {
+                    String msg = "404 Not Found";
+                    exchange.sendResponseHeaders(404, msg.length());
+                    try (OutputStream os = exchange.getResponseBody()) { os.write(msg.getBytes()); }
+                }
+            });
+
+            webServer.setExecutor(null);
+            webServer.start();
+        } catch (Exception e) {
+            getLogger().severe("Failed to start Web Server: " + e.getMessage());
+        }
     }
 
     private void startDiscordBot() {
@@ -352,6 +423,7 @@ public class WebStats extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         if (jda != null) jda.shutdownNow();
+        if (webServer != null) webServer.stop(0);
         syncServerStats(false);
         for (Player player : Bukkit.getOnlinePlayers()) {
             syncPlayer(player, false);
@@ -528,6 +600,7 @@ public class WebStats extends JavaPlugin implements Listener {
         double mspt = calculateMSPT();
         String json = String.format("{\"tps\":%.2f, \"mspt\":%.1f, \"players_online\":%d, \"players_max\":%d, \"status\":\"%s\", \"net_in\":%.2f, \"net_out\":%.2f}", 
                 currentTps, mspt, Bukkit.getOnlinePlayers().size(), Bukkit.getMaxPlayers(), online ? "online" : "offline", netInMbps, netOutMbps);
+        serverHealthCache = json;
         sendCloudUpdate(databaseURL + "/server/health.json", json, "PATCH");
     }
 
@@ -545,6 +618,7 @@ public class WebStats extends JavaPlugin implements Listener {
         pulseHistory.add(dp);
         if (pulseHistory.size() > 1440) pulseHistory.removeFirst();
         String json = "[" + String.join(",", pulseHistory) + "]";
+        historyCache = json;
         sendCloudUpdate(databaseURL + "/server/history.json", json, "PUT");
     }
 
@@ -656,7 +730,9 @@ public class WebStats extends JavaPlugin implements Listener {
         } catch (Exception ignored) {}
         json.append("]}");
 
-        sendCloudUpdate(databaseURL + "/players/" + uuid + ".json", json.toString(), "PATCH");
+        String result = json.toString();
+        playerCache.put(uuid, result);
+        sendCloudUpdate(databaseURL + "/players/" + uuid + ".json", result, "PATCH");
     }
 
     private void sendCloudUpdate(String url, String json, String method) {

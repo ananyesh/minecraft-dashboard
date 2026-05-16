@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Master Dashboard Configuration
     const DASHBOARD_CONFIG = {
         ranked_enabled: false, // Set to false to hide all Ranked/ELO stats across the site
-        firebase_url: 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/'
+        firebase_url: 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/',
+        is_hosted_locally: window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('github.io'),
+        unified_api_url: "/api/data"
     };
 
     // State Management
@@ -64,6 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
      * Data Sync
      */
     async function updateAllData() {
+        if (DASHBOARD_CONFIG.is_hosted_locally) {
+            try {
+                const res = await fetch(DASHBOARD_CONFIG.unified_api_url);
+                const data = await res.json();
+                if (data.server) serverData = data.server;
+                if (data.players) players = data.players;
+                if (data.history) pulseHistory = data.history;
+                if (data.live_logs) {
+                    liveLogs = data.live_logs;
+                    const newLogs = liveLogs.filter(l => l.time > lastSeenLogTime).reverse();
+                    newLogs.forEach(log => {
+                        showToast(log);
+                        lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
+                    });
+                }
+                renderAll();
+                updateGlobalCompetitionSummary();
+                return;
+            } catch (e) { console.error("Local API failed, falling back to Firebase", e); }
+        }
+
+        // Fallback to original Firebase individual fetches
         try {
             const [pRes, sRes, hRes] = await Promise.allSettled([
                 fetch(baseFirebaseURL + 'players.json'),

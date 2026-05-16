@@ -1,4 +1,8 @@
 # WebStats Configuration
+# Dashboard Hosting (Firebase-free)
+web-port: 8080
+host-locally: true
+
 
 # Your Firebase Realtime Database URL. 
 # 1. Create a project at https://console.firebase.google.com/
