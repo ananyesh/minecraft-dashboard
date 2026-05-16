@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch(DASHBOARD_CONFIG.unified_api_url);
             const data = await res.json();
             if (data.server) serverHealth = data.server;
-            if (data.players) players = data.players;
+            if (data.players) players = Object.values(data.players);
             if (data.history) playerHistory = data.history;
             if (data.live_logs) {
                 liveLogs = data.live_logs;
