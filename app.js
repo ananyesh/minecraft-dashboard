@@ -62,22 +62,21 @@
     // News / Blog Data
     const updates = [
         {
-            date: "May 8, 2026",
-            version: "v3.0",
+            date: "May 16, 2026",
+            version: "v3.6",
             author: "QuartzEngine",
             handle: "@quartz_smp",
             avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
-            title: "Sentinel Update: Network & Discord",
-            desc: "The ultimate security and community update. Introducing real-time DDoS detection and automated Discord whitelisting.",
-            features: ["Network DDoS Monitor", "Discord Bot Whitelist", "Traffic Alert Colors", "Live Bandwidth Chart"],
+            title: "Sentinel v3.6: Network & Discord",
+            desc: "The ultimate security and community update. Introducing the 'One-User' Whitelist and Master Ranked Control.",
+            features: ["Discord 'Lock-In' Whitelist", "Master Ranked Toggle", "DDoS Network Monitor", "GPU-Accelerated Dashboard"],
             content: `
-                <h2>Network Sentinel System</h2>
-                <p>We've deployed a state-of-the-art <strong>Network Monitoring Engine</strong> directly on the server. You can now see real-time bandwidth usage (Mbps) on the dashboard.</p>
-                <p>A new <strong>DDoS Alert System</strong> has been integrated—the network gauge will change color from blue to bright red if it detects malicious traffic, allowing us to respond to attacks instantly.</p>
+                <h2>Network Sentinel & Whitelist v3.6</h2>
+                <p>We've deployed a massive update to the <strong>Network Monitoring Engine</strong>. You can now see real-time bandwidth usage (Mbps) on the dashboard with full DDoS protection colors.</p>
                 
-                <h2>Discord Whitelist Automation</h2>
-                <p>Joining the server has never been easier. We've introduced a custom <strong>Discord Whitelist Bot</strong>. Simply type your username in the designated channel, and you'll be whitelisted automatically.</p>
-                <p>This system includes "One Account per User" protection to ensure a fair and stable community environment.</p>
+                <h2>Secure Discord Whitelist</h2>
+                <p>Our new <strong>Discord Whitelist Bot</strong> is now live with "Lock-In" protection. Once you link your Minecraft account to your Discord profile, it's permanent. This prevents account theft and ensures a fair community.</p>
+                <p>The bot now supports ✅/❌ reactions for instant feedback directly in Discord.</p>
             `
         },
         {
