@@ -79,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAll();
             updateGlobalCompetitionSummary();
             return;
-        } catch (e) { console.error("API Sync Error:", e); }
+        } catch (e) {
+            console.error("Dashboard API Sync Error:", e);
         } finally {
             renderAll();
         }
