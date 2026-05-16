@@ -55,9 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const navEvents = document.getElementById('nav-events');
     const btnFilterRanked = document.getElementById('btn-filter-ranked');
 
-    // Hide Ranked UI if disabled
+    // Hide Ranked UI if disabled (only the filter pill, keep the tab)
     if (!DASHBOARD_CONFIG.ranked_enabled) {
-        if (navLeaderboards) navLeaderboards.style.display = 'none';
         if (btnFilterRanked) btnFilterRanked.style.display = 'none';
     }
     const navUpdates = document.getElementById('nav-updates');
