@@ -589,19 +589,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="p-status ${player.online ? 'online' : 'offline'}">
                         <span class="status-dot"></span> ${player.online ? 'Active' : 'Offline'}
                     </div>
-                    <div class="strength-row">
-                        <div class="p-strength-badge ${(player.strength || 0) === 0 ? 'strength-dead' : ''} ${(player.strength || 0) === 5 ? 'strength-max' : ''}" style="--intensity: ${(player.strength || 0) / 5};">
-                            <i class="fa-solid fa-hand-fist"></i> <span class="val">${player.strength || 0}</span> <span class="lab">Strength</span>
-                        </div>
-                        <div class="p-weapon-badge">
-                            <i class="fa-solid ${getWeaponIcon(player.weapon)}"></i> <span class="lab">Weapon:</span> <span class="val">${player.weapon || 'None'}</span>
-                        </div>
+                    <div class="p-stats-mini">
+                        <div class="p-stat-item" title="Player Kills"><i class="fa-solid fa-skull"></i> <span class="p-stat-val">${custom['PLAYER_KILLS'] || 0}</span></div>
+                        <div class="p-stat-item" title="Deaths"><i class="fa-solid fa-ghost"></i> <span class="p-stat-val">${custom['DEATHS'] || 0}</span></div>
+                        <div class="p-stat-item" title="Playtime"><i class="fa-solid fa-clock"></i> <span class="p-stat-val">${Math.floor((custom['PLAY_ONE_MINUTE'] || 0) / 20 / 60 / 60)}h</span></div>
                     </div>
-                    <div class="p-quick-stats">
-                        <div class="stat-item"><span class="val">${m1Val}</span><span class="lab">${m1Label}</span></div>
-                        <div class="stat-item"><span class="val">${m2Val}</span><span class="lab">${m2Label}</span></div>
+                    <div class="p-weapon-badge" style="margin-top:8px; font-size:10px; opacity:0.8;">
+                        <i class="fa-solid ${getWeaponIcon(player.weapon)}"></i> <span class="lab">Weapon:</span> <span class="val" style="font-weight:700;">${player.weapon || 'None'}</span>
                     </div>
-                    <div class="p-rank-badge" style="color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
+                    <div class="p-rank-badge" style="margin-top:12px; color:${getRank(calculateElo(player)).color};border-color:${getRank(calculateElo(player)).color}44;background:${getRank(calculateElo(player)).color}11">
                         ${getRank(calculateElo(player)).icon} ${getRank(calculateElo(player)).name}
                     </div>
                 </div>`;
@@ -794,20 +790,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 3. Hero Stats
             const heroElo = document.getElementById('hero-elo');
-            if (heroElo) heroElo.textContent = elo;
             const heroRankName = document.getElementById('hero-rank-name');
-            if (heroRankName) heroRankName.textContent = eloRank.name + ' Rank';
-            
             const heroRankEl = document.getElementById('hero-rank');
-            if (heroRankEl) heroRankEl.textContent = '#' + currentRank;
-            
-            const heroStrength = document.getElementById('hero-strength');
-            const heroStrengthStatus = document.getElementById('hero-strength-status');
-            if (heroStrength) heroStrength.textContent = player.strength || 0;
-            if (heroStrengthStatus) heroStrengthStatus.textContent = (player.strength || 0) === 5 ? 'MAX LEVEL' : 'Strength Boost';
-            
             const heroWeapon = document.getElementById('hero-weapon');
             const heroWeaponIcon = document.getElementById('hero-weapon-icon');
+
+            const isRanked = (player.ranked || 0) > 0;
+            
+            // Hide/Show Ranked Hero Cards
+            if (heroElo) {
+                heroElo.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
+                heroElo.textContent = elo;
+            }
+            if (heroRankName) heroRankName.textContent = eloRank.name + ' Rank';
+            if (heroRankEl) {
+                heroRankEl.closest('.hero-stat-card').style.display = isRanked ? 'flex' : 'none';
+                heroRankEl.textContent = '#' + currentRank;
+            }
+            
             if (heroWeapon) heroWeapon.textContent = player.weapon || 'None';
             if (heroWeaponIcon) {
                 heroWeaponIcon.className = 'fa-solid ' + getWeaponIcon(player.weapon);

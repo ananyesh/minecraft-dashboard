@@ -102,8 +102,12 @@ body {
     display: flex; align-items: center; gap: 16px; padding: 12px 20px;
     border-radius: 12px; cursor: pointer; transition: var(--transition); color: var(--text-muted);
 }
-.nav-item:hover { background: var(--card-bg); color: var(--text-main); }
-.nav-item.active { background: var(--primary); color: #000; font-weight: 700; box-shadow: 0 0 20px var(--primary-glow); }
+.nav-item:hover { background: var(--card-bg); color: var(--text-main); transform: translateX(5px); }
+.nav-item.active { 
+    background: var(--primary); color: #000; font-weight: 700; 
+    box-shadow: 0 0 25px var(--primary-glow);
+    filter: drop-shadow(0 0 5px var(--primary));
+}
 
 .server-status-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px; }
 .status-header { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; margin-bottom: 12px; }
@@ -195,7 +199,12 @@ select#sort-by option {
     background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
     padding: 16px; text-align: center; cursor: pointer; transition: var(--transition);
 }
-.player-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+.player-card:hover { 
+    transform: translateY(-8px) scale(1.02); 
+    border-color: var(--primary); 
+    background: rgba(255,255,255,0.08); 
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4), 0 0 15px var(--primary-glow);
+}
 .player-card.offline-card { opacity: 0.4; }
 
 .p-avatar { width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 12px; overflow: hidden; background: #000; }
@@ -228,47 +237,14 @@ select#sort-by option {
 }
 .p-status.offline .status-dot { background: var(--text-muted); opacity: 0.5; }
 
-/* Exclusive Strength Badge */
-.p-strength-badge {
-    display: inline-flex; align-items: baseline; gap: 6px;
-    margin-top: 12px; margin-bottom: -4px; padding: 6px 14px; border-radius: 8px;
-    background: linear-gradient(135deg, rgba(249, 115, 22, calc(0.05 + 0.35 * var(--intensity, 0))), rgba(234, 88, 12, calc(0.02 + 0.15 * var(--intensity, 0))));
-    border: 1px solid rgba(249, 115, 22, calc(0.1 + 0.6 * var(--intensity, 0)));
-    color: rgba(255, 237, 213, calc(0.4 + 0.6 * var(--intensity, 0))); font-weight: 800; font-size: 14px;
-    box-shadow: 0 0 calc(10px + 40px * var(--intensity, 0)) rgba(249, 115, 22, calc(0.1 + 0.6 * var(--intensity, 0))); 
-    transition: var(--transition);
+/* Player Card Stats Mini-Strip */
+.p-stats-mini {
+    display: flex; justify-content: center; gap: 12px; margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
 }
-.player-card:hover .p-strength-badge {
-    background: linear-gradient(135deg, rgba(249, 115, 22, calc(0.1 + 0.45 * var(--intensity, 0))), rgba(234, 88, 12, calc(0.05 + 0.25 * var(--intensity, 0))));
-    box-shadow: 0 0 calc(15px + 50px * var(--intensity, 0)) rgba(249, 115, 22, calc(0.2 + 0.8 * var(--intensity, 0))); 
-    transform: scale(1.05);
-}
-
-/* Strength Max State (Red Glowing) */
-.strength-max {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(185, 28, 28, 0.6)) !important;
-    border-color: #ef4444 !important;
-    color: #fff !important;
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.3) !important;
-    animation: strength-pulse 1.5s infinite alternate ease-in-out;
-}
-@keyframes strength-pulse {
-    from { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.3); transform: scale(1.05); }
-    to { box-shadow: 0 0 35px rgba(239, 68, 68, 0.9), 0 0 60px rgba(239, 68, 68, 0.5); transform: scale(1.1); }
-}
-
-.p-strength-badge i { color: rgba(255, 255, 255, calc(0.5 + 0.5 * var(--intensity, 0))); font-size: 12px; }
-.p-strength-badge .val { font-family: 'JetBrains Mono', monospace; font-size: 16px; }
-.p-strength-badge .lab { font-size: 9px; opacity: 0.8; letter-spacing: 1px; }
-
-/* Strength Exhausted State */
-.strength-dead {
-    box-shadow: 0 0 10px rgba(100, 100, 100, 0.1) !important;
-    background: rgba(255,255,255,0.02) !important;
-    border-color: rgba(255,255,255,0.05) !important;
-    color: #a1a1aa !important;
-}
-.strength-dead i { color: #71717a !important; text-shadow: none !important; }
+.p-stat-item { display: flex; align-items: center; gap: 4px; color: var(--text-muted); }
+.p-stat-item i { font-size: 9px; opacity: 0.7; }
+.p-stat-val { color: var(--text-main); }
 .strength-dead .val, .strength-dead .stat-value, .strength-dead .stat-label { color: #a1a1aa !important; text-shadow: none !important; }
 
 /* Quick Stats on Cards */
