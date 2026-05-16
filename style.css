@@ -1457,3 +1457,158 @@ select#sort-by option {
 .l-stat-item i { font-size: 10px; opacity: 0.7; }
 .l-stat-strength { color: #f43f5e; font-weight: 700; }
 .l-stat-weapon { color: #22c55e; font-weight: 700; text-transform: uppercase; }
+
+/* Global Summary Row (Matches, Net Elo, Top Rank) */
+.global-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.summary-card-premium {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.summary-card-premium:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.summary-card-premium .s-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 12px;
+}
+
+.summary-card-premium .s-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    font-family: 'Inter', sans-serif;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+#global-net-elo { color: #38bdf8; text-shadow: 0 0 20px rgba(56, 189, 248, 0.3); }
+
+.summary-card-premium .s-sub {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Events Console Overhaul */
+.events-console {
+    background: #0a0f18;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
+    margin-top: 20px;
+}
+
+.console-header {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.console-dot-group {
+    display: flex;
+    gap: 6px;
+}
+
+.c-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+.c-dot.red { background: #ef4444; }
+.c-dot.yellow { background: #f59e0b; }
+.c-dot.green { background: #10b981; }
+
+.console-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.05em;
+}
+
+.events-feed-container {
+    height: 600px;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 39px,
+        rgba(255,255,255,0.01) 40px
+    );
+}
+
+.events-feed-container::-webkit-scrollbar { width: 4px; }
+.events-feed-container::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+
+/* Console Log Line Styles */
+.console-log-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 15px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    transition: background 0.2s;
+}
+
+.console-log-line:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.log-timestamp { color: rgba(255, 255, 255, 0.3); font-size: 11px; min-width: 85px; }
+.log-indicator { font-size: 8px; filter: drop-shadow(0 0 5px currentColor); }
+.log-user-tag { color: #fff; font-weight: 700; min-width: 100px; }
+.log-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.log-tag.tag-top10 { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
+.log-action { color: #38bdf8; font-size: 11px; opacity: 0.8; min-width: 120px; }
+.log-details { color: rgba(255, 255, 255, 0.6); flex: 1; }
+.log-value { font-weight: 800; text-align: right; min-width: 80px; }
+
+/* Stagger animations for new entries */
+.console-log-line {
+    animation: consoleSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes consoleSlideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+

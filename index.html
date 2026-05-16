@@ -51,10 +51,6 @@
                     <i class="fa-solid fa-circle-question"></i>
                     <span>FAQ / Guide</span>
                 </div>
-                <div class="nav-item" id="nav-updates">
-                    <i class="fa-solid fa-newspaper"></i>
-                    <span>Updates</span>
-                </div>
                 <div class="nav-item" id="nav-events">
                     <i class="fa-solid fa-bolt-lightning"></i>
                     <span>Live Events</span>
@@ -128,6 +124,39 @@
 
                     <div class="player-grid" id="player-grid">
                         <div class="loading-state"><div class="spinner"></div><p>Synchronizing...</p></div>
+                    </div>
+                </section>
+
+                <!-- Leaderboard Tab -->
+                <section id="leaderboard-section" style="display: none;">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <h2>Global Competition Standings</h2>
+                            <p>Real-time ELO distribution and combat ranking.</p>
+                        </div>
+                    </div>
+
+                    <!-- Global Summary Row (Matches, Net Elo, Top Rank) -->
+                    <div class="global-summary-row stagger-1">
+                        <div class="summary-card-premium">
+                            <span class="s-label">MATCHES</span>
+                            <span class="s-value" id="global-matches">0</span>
+                            <span class="s-sub" id="global-winloss">0W - 0L</span>
+                        </div>
+                        <div class="summary-card-premium">
+                            <span class="s-label">NET ELO</span>
+                            <span class="s-value" id="global-net-elo">+0</span>
+                            <span class="s-sub">today</span>
+                        </div>
+                        <div class="summary-card-premium">
+                            <span class="s-label">TOP RANK</span>
+                            <span class="s-value" id="global-top-rank">#1</span>
+                            <span class="s-sub" id="global-top-name">---</span>
+                        </div>
+                    </div>
+
+                    <div class="player-grid" id="leaderboard-grid">
+                        <div class="loading-state"><div class="spinner"></div><p>Calculating rankings...</p></div>
                     </div>
                 </section>
 
@@ -363,18 +392,6 @@
                     </div>
                 </section>
 
-                <!-- Updates / Blog Section -->
-                <section id="updates-section" style="display: none;">
-                    <div class="section-title">
-                        <div class="title-left">
-                            <h2>Patch Notes & Announcements</h2>
-                            <p>Keep up with the latest QuartzSMP news and telemetry updates.</p>
-                        </div>
-                    </div>
-                    <div class="blog-feed" id="blog-feed">
-                        <!-- Blog posts injected here -->
-                    </div>
-                </section>
 
                 <!-- Live Events Feed Section -->
                 <section id="events-section" style="display: none;">
@@ -384,8 +401,18 @@
                             <p>Real-time historical feed of server-wide player achievements and rankings.</p>
                         </div>
                     </div>
-                    <div class="events-feed-container" id="events-feed-container">
-                        <!-- Event log cards injected here -->
+                    <div class="events-console">
+                        <div class="console-header">
+                            <div class="console-dot-group">
+                                <span class="c-dot red"></span>
+                                <span class="c-dot yellow"></span>
+                                <span class="c-dot green"></span>
+                            </div>
+                            <span class="console-title"><i class="fa-solid fa-terminal"></i> EVENT_STREAM.LOG</span>
+                        </div>
+                        <div class="events-feed-container" id="events-feed-container">
+                            <!-- Event log cards injected here -->
+                        </div>
                     </div>
                 </section>
             </div>
@@ -476,16 +503,6 @@
         </div>
     </div>
 
-    <!-- Blog Reader Overlay -->
-    <div class="blog-reader-overlay" id="blog-reader-overlay">
-        <div class="blog-reader-content" id="blog-reader-content">
-            <button class="close-reader" onclick="closeBlogReader()"><i class="fa-solid fa-arrow-left"></i> Back to Updates</button>
-            
-            <div id="blog-article-content">
-                <!-- Detailed article content injected here -->
-            </div>
-        </div>
-    </div>
     <!-- Toast Container for Live Broadcasts -->
     <div id="toast-container" class="toast-container"></div>
 

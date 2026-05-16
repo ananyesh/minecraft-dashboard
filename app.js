@@ -59,199 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!DASHBOARD_CONFIG.ranked_enabled) {
         if (btnFilterRanked) btnFilterRanked.style.display = 'none';
     }
-    const navUpdates = document.getElementById('nav-updates');
-
-    // News / Blog Data
-    const updates = [
-        {
-            date: "May 16, 2026",
-            version: "v3.7",
-            author: "QuartzEngine",
-            handle: "@quartz_smp",
-            avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
-            title: "Sentinel v3.7: Official Release",
-            desc: "The definitive security and community update. Feature-complete Discord 'Lock-In' and Ranked Integration.",
-            features: ["Finalized Discord Whitelist", "Optimized Ranked Toggle", "DDoS-Shield Network Stats", "Enhanced Dashboard Stability"],
-            content: `
-                <h2>Sentinel v3.7 Official Launch</h2>
-                <p>We are proud to announce the stable release of <strong>Sentinel v3.7</strong>. This version finalizes our core security protocols and community integration tools.</p>
-                
-                <h2>What's New in v3.7?</h2>
-                <ul>
-                    <li><strong>Account Binding:</strong> Your Discord profile is now permanently linked to your Minecraft IGN for maximum security.</li>
-                    <li><strong>Ranked Flexibility:</strong> Server owners can now toggle Ranked integration without affecting core ELO and Kill telemetry.</li>
-                    <li><strong>Telemetry Engine:</strong> Optimized for high-frequency updates with zero dashboard lag.</li>
-                </ul>
-            `
-        },
-        {
-            date: "April 25, 2026",
-            version: "v2.0",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Live Events Search & Dynamic Filtering",
-            desc: "The Live Events feed is now fully searchable, allowing you to track specific player achievements with ease.",
-            features: ["Event Tab Search", "Real-time Filtering", "Empty Result States"],
-            content: `
-                <h2>Searchable Telemetry</h2>
-                <p>We've integrated the global search bar with the Live Events feed. You can now type a player's name into the search bar while in the Events tab to instantly filter their historical log.</p>
-                
-                <h2>Dynamic Result Handling</h2>
-                <p>The feed now handles empty search states with a clean, branded "No results" screen, making it easier to navigate through large amounts of server data.</p>
-            `
-        },
-        {
-            date: "April 25, 2026",
-            version: "v1.9",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Competitive Event Logic Refinement",
-            desc: "Improved accuracy for Elo source attribution and enhanced rank transition visibility.",
-            features: ["Neutral Elo Source Labeling", "Clear Rank Up/Down Text", "Improved Event Icons"],
-            content: `
-                <h2>Event Attribution Fix</h2>
-                <p>We've updated the labeling system for Elo changes. Previously, some gains were incorrectly labeled as 'Combat Engagement' even when earned through playtime. We've switched to a more accurate <strong>Competitive Update</strong> tag to reflect all forms of performance gains.</p>
-                
-                <h2>Enhanced Rank Visibility</h2>
-                <p>Rank updates are now much clearer in the Live Events feed. Instead of just showing the rank name, the feed now explicitly states <strong>'Promoted to'</strong> or <strong>'Demoted to'</strong> alongside updated icons for better visual cues.</p>
-            `
-        },
-        {
-            date: "April 25, 2026",
-            version: "v1.8",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Live Events Hub & Profile Hotfixes",
-            desc: "Introducing a dedicated telemetry feed for global server events and critical layout adjustments.",
-            features: ["Live Events Tab", "Enlarged Broadcast Toasts", "Avatar Distortion Fix", "Profile Padding Adjustment"],
-            content: `
-                <h2>Brand New 'Live Events' Feed</h2>
-                <p>You can now view a permanent, historical log of all global server events in the new <strong>Live Events</strong> tab on the left sidebar. This feed tracks Elo gains, Elo losses, and major Rank promotions in real-time, giving you a crystal clear view of the server's competitive landscape.</p>
-                
-                <h2>Bigger Broadcasts & UI Hotfixes</h2>
-                <p>We've significantly scaled up the size of the live broadcast pop-ups (toasts) so you never miss a major rank change while scrolling. Additionally, we fixed a severe visual bug that caused player avatars on the profile page to look incredibly distorted and zoomed in. They now perfectly display a crisp 3D head.</p>
-            `
-        },
-        {
-            date: "April 24, 2026",
-            version: "v1.7",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Pro-Analytics & Profile Redesign",
-            desc: "Effortless graph hover interactions and a more spacious player profile layout.",
-            features: ["Pro-Analytics Graph Hover", "Invisible Data Slices", "Wider Profile Panel", "Bug Fixes"],
-            content: `
-                <h2>Pro-Analytics Hover System</h2>
-                <p>We've completely overhauled how you interact with the ELO and Rank graphs. Instead of trying to precisely click or hover over tiny data points, you can now simply move your mouse anywhere along the timeline.</p>
-                <p>An invisible vertical "slice" system combined with a sleek crosshair guide will automatically snap to the nearest data point, making data inspection feel like professional trading software.</p>
-                
-                <h2>Expanded Profile Layout</h2>
-                <p>We heard your feedback that the player details panel felt a bit cramped. We've widened the panel significantly to provide more breathing room for the premium graphs and detailed statistics.</p>
-            `
-        },
-        {
-            date: "April 24, 2026",
-            version: "v1.6",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Competitive Broadcast System",
-            desc: "Real-time global notifications for ELO fluctuations and Rank milestones.",
-            features: ["Live Activity Ticker", "Rank Promotion Toasts", "Global Event Feed", "Real-time Sync"],
-            content: `
-                <h2>The World is Watching</h2>
-                <p>We've introduced a state-of-the-art <strong>Live Broadcast</strong> system. Every ELO gain, loss, and major rank change is now broadcasted in real-time across the dashboard.</p>
-                
-                <h2>Global Event Feed</h2>
-                <p>Check the new <strong>Live Activity</strong> widget in the sidebar. It tracks the last 20 server-wide events, providing a chronological history of the server's competitive landscape.</p>
-                
-                <h2>Rank Milestones</h2>
-                <p>When a player ascends to a new rank (e.g. from Iron to Gold), a special <strong>Gold Trophy Toast</strong> will appear for all users. Competitive milestones have never felt this premium.</p>
-            `
-        },
-        {
-            date: "April 24, 2026",
-            version: "v1.5",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "Adaptive Telemetry & Theme Engine",
-            desc: "Visual overhaul with new multi-theme support (Abyss, Quartz, Crimson) and corrected historical telemetry curves.",
-            features: ["Dynamic Theme Switcher", "Fixed Trajectory Direction", "Rank Placement Fallbacks", "UI Polish"],
-            content: `
-                <h2>Visual Sovereignty</h2>
-                <p>Choose your style. We've introduced three distinct themes to the dashboard: <strong>Abyss</strong> (Classic), <strong>Quartz</strong> (Light Mode), and <strong>Crimson</strong> (Hardcore Dark Red).</p>
-                
-                <h2>Fixed Telemetry Timeline</h2>
-                <p>We resolved an issue where ELO graphs were displaying inverted timelines. Your graphs now correctly read from left (past) to right (present), anchored to your current score.</p>
-                
-                <h2>Leaderboard History</h2>
-                <p>The new Placement graph tracks your rank over time. If you haven't played on the new version yet, we show your current rank as a stable baseline until more snapshots are recorded.</p>
-            `
-        },
-        {
-            date: "April 21, 2026",
-            version: "v1.4",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42",
-            title: "History-First Authoritative ELO",
-            desc: "ELO is now 100% determined by your history logs. We've removed the log cap and starting offset for maximum accuracy.",
-            features: ["Uncapped History Logs", "Automatic Join-Repair", "0-Base Scaling"],
-            content: `
-                <h2>The Absolute Source of Truth</h2>
-                <p>We've heard your feedback regarding ELO drift. From now on, your ELO score is no longer a separate number—it is the direct sum of every gain and loss in your history logs.</p>
-                <p>To ensure this is 100% accurate, we have <strong>removed the 50-log limit</strong>. Every single action you take is now a permanent part of your legacy.</p>
-                
-                <h2>Automatic Synchronization</h2>
-                <p>You no longer need to run manual repair commands. Every time you join the server, the Quartz engine performas a <strong>"Silent Repair"</strong> that recalculates your score from scratch based on your logs.</p>
-                
-                <h2>Starting from Scratch</h2>
-                <p>We have removed the default 100 ELO starting bonus. Everyone now starts at <span class="highlight-text">0</span>, making every point you earn feel more meaningful. Don't worry—your ranks have been adjusted to match this new scale!</p>
-            `
-        },
-        {
-            date: "April 21, 2026",
-            version: "v1.3",
-            author: "ananyesh",
-            handle: "@ananyesh",
-            avatar: "https://mc-heads.net/avatar/ananyesh/42", // Updated to your MC skin if available
-            title: "The Authoritative ELO Update",
-            desc: "A massive core engine migration. The dashboard now uses authoritative server-side ELO math, eliminating sync discrepancies.",
-            features: ["Synchronized Score Repair", "Server-Side ELO Engine", "Ghost Player Protection"],
-            content: `
-                <h2>The Stabilization of QuartzSMP</h2>
-                <p>This may come as a shock to many of you, but the ELO system wasn't actually "stable" this entire time. It was technically "in development". That changes today. Introducing: <code>Authoritative ELO v1.3</code>.</p>
-                <p>We've heard complaints that ELO gains were disappearing or "resetting" after a server restart. This was due to a <strong>race condition</strong> between the playtime tracker and the PvP engine. We have now unified the persistence layer.</p>
-                
-                <h2>Authoritative Logic</h2>
-                <p>Quartz isn't just a tracking bot anymore. It's about tracking and analyzing statistics accurately. The new engine performs all calculations on the server, ensuring that what you see on the dashboard is the 100% truth.</p>
-                
-                <h2>Manual Repair Tools</h2>
-                <p>We've added the <code>/elo repair</code> command for administrators. This tool scans your entire history and reconstructs your score if it ever drifts from the truth.</p>
-            `
-        },
-        {
-            date: "April 20, 2026",
-            version: "v1.2",
-            author: "QuartzEngine",
-            handle: "@quartz_smp",
-            avatar: "https://mc-heads.net/avatar/QuartzEngine/42",
-            title: "Competitive Visual Overhaul",
-            desc: "New high-fidelity tracking features for competitive players, including rank-based progress bars.",
-            features: ["Mini Rank Bars", "Top 3 Podium Highlighting"],
-            content: `
-                <h2>Website Overhaul</h2>
-                <p>The website has now been overhauled to have <strong>high-fidelity visual cues</strong> for your rank progression. If you're reading this, that means you must be on the new site. In which case, hello there!</p>
-                <h2>Rank Progress Bars</h2>
-                <p>We've added mini-bars to every row. These bars show precisely how close you are to your next major rank (Iron, Gold, etc.).</p>
-            `
-        }
-    ];
 
     const blogReader = document.getElementById('blog-reader-overlay');
     const articleContainer = document.getElementById('blog-article-content');
@@ -675,6 +482,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLeaderboard() {
         const sorted = getSortedPlayers(true);
         if (sorted.length === 0) { playerGrid.innerHTML = '<div class="loading-state"><p>No competition data yet.</p></div>'; return; }
+
+        // --- Calculate Global Competition Summary (Power Trio) ---
+        const todayStart = new Date().setHours(0,0,0,0) / 1000;
+        const dailyLogs = liveLogs.filter(l => l.time >= todayStart);
+        
+        const totalMatches = dailyLogs.filter(l => l.change !== 0).length;
+        const totalWins = dailyLogs.filter(l => l.change > 0).length;
+        const totalLosses = dailyLogs.filter(l => l.change < 0).length;
+        const netElo = dailyLogs.reduce((sum, l) => sum + (l.change || 0), 0);
+        const topPlayer = sorted[0];
+
+        const elMatches = document.getElementById('global-matches');
+        const elWinLoss = document.getElementById('global-winloss');
+        const elNetElo = document.getElementById('global-net-elo');
+        const elTopRank = document.getElementById('global-top-rank');
+        const elTopName = document.getElementById('global-top-name');
+
+        if (elMatches) elMatches.textContent = totalMatches;
+        if (elWinLoss) elWinLoss.textContent = `${totalWins}W - ${totalLosses}L`;
+        if (elNetElo) {
+            elNetElo.textContent = (netElo >= 0 ? '+' : '') + netElo;
+            elNetElo.style.color = netElo >= 0 ? '#38bdf8' : '#ef4444';
+        }
+        if (elTopRank) elTopRank.textContent = '#1';
+        if (elTopName) elTopName.textContent = topPlayer ? topPlayer.username : '---';
+        // ---------------------------------------------------------
 
         let currentRank = 1;
         let previousVal = null;
@@ -1218,10 +1051,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'faq') {
             navFaq.classList.add('active');
             faqSection.style.display = 'block';
-        } else if (tab === 'updates') {
-            navUpdates.classList.add('active');
-            updatesSection.style.display = 'block';
-            if (document.getElementById('blog-feed').innerHTML === '') renderUpdates();
         } else if (tab === 'events') {
             navEvents.classList.add('active');
             eventsSection.style.display = 'block';
@@ -1232,7 +1061,6 @@ document.addEventListener('DOMContentLoaded', () => {
     navPlayers.addEventListener('click', () => switchTab('players'));
     navLeaderboards.addEventListener('click', () => switchTab('leaderboard'));
     navHealth.addEventListener('click', () => switchTab('health'));
-    navUpdates.addEventListener('click', () => switchTab('updates'));
     navFaq.addEventListener('click', () => switchTab('faq'));
     navEvents.addEventListener('click', () => switchTab('events'));
     closePanelBtn.addEventListener('click', () => { detailsPanel.classList.remove('open'); selectedPlayer = null; });
@@ -1449,14 +1277,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             return `
-            <div class="${cardClass}">
-                <div class="event-time">${timeStr}</div>
-                <div class="event-icon">${icon}</div>
-                <div class="event-details">
-                    <span class="event-user">${log.user} <span class="event-rank-tag ${tagClass}">${tagText}</span></span>
-                    <span class="event-action">${log.type === 'PROMOTED' || log.type === 'DEMOTED' ? 'Rank Update' : 'Competitive Update'}</span>
-                </div>
-                <div class="event-value">${valueStr}</div>
+            <div class="console-log-line ${tierClass}">
+                <span class="log-timestamp">[${timeStr}]</span>
+                <span class="log-indicator" style="color:${log.change >= 0 ? '#10b981' : '#ef4444'}">●</span>
+                <span class="log-user-tag">${log.user}</span>
+                <span class="log-tag ${tagClass}">${tagText}</span>
+                <span class="log-action">${log.type === 'PROMOTED' || log.type === 'DEMOTED' ? 'RANK_TRANSITION' : 'ELO_SHIFT'}</span>
+                <span class="log-details">${log.details}</span>
+                <span class="log-value" style="color:${log.change >= 0 ? '#10b981' : '#ef4444'}">${valueStr}</span>
             </div>`;
         }).join('');
     }
