@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Master Dashboard Configuration
     const DASHBOARD_CONFIG = {
-        ranked_enabled: true, // Set to false to hide all Ranked/ELO stats across the site
+        ranked_enabled: false, // Set to false to hide all Ranked/ELO stats across the site
         firebase_url: 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/'
     };
 
