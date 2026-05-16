@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Master Dashboard Configuration
     const DASHBOARD_CONFIG = {
         ranked_enabled: false, // Set to false to hide all Ranked/ELO stats across the site
-        firebase_url: 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/',
-        is_hosted_locally: window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && !window.location.hostname.includes('github.io'),
         unified_api_url: "/api/data"
     };
 
@@ -25,8 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let eloMap = {};      // { uuid: calculatedElo } — updated by recalculateAllElos()
     let liveLogs = [];    // Global storage for events to support search/filtering
 
-    // Configuration
-    const baseFirebaseURL = 'https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/';
 
     // DOM Elements
     const playerGrid = document.getElementById('player-grid');
@@ -66,121 +62,30 @@ document.addEventListener('DOMContentLoaded', () => {
      * Data Sync
      */
     async function updateAllData() {
-        if (DASHBOARD_CONFIG.is_hosted_locally) {
-            try {
-                const res = await fetch(DASHBOARD_CONFIG.unified_api_url);
-                const data = await res.json();
-                if (data.server) serverData = data.server;
-                if (data.players) players = data.players;
-                if (data.history) pulseHistory = data.history;
-                if (data.live_logs) {
-                    liveLogs = data.live_logs;
-                    const newLogs = liveLogs.filter(l => l.time > lastSeenLogTime).reverse();
-                    newLogs.forEach(log => {
-                        showToast(log);
-                        lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
-                    });
-                }
-                renderAll();
-                updateGlobalCompetitionSummary();
-                return;
-            } catch (e) { console.error("Local API failed, falling back to Firebase", e); }
-        }
-
-        // Fallback to original Firebase individual fetches
         try {
-            const [pRes, sRes, hRes] = await Promise.allSettled([
-                fetch(baseFirebaseURL + 'players.json'),
-                fetch(baseFirebaseURL + 'server/health.json'),
-                fetch(baseFirebaseURL + 'server/history.json')
-            ]);
-
-            if (pRes.status === 'fulfilled') {
-                const pData = await pRes.value.json();
-                const rawPlayers = pData ? Object.values(pData).filter(p => p && p.username) : [];
-                const deduped = {};
-                const now = Math.floor(Date.now() / 1000);
-
-                rawPlayers.forEach(p => {
-                    const name = p.username.toLowerCase();
-                    const existing = deduped[name];
-                    
-                    // Ghost Protection: If online but haven't been seen in > 10 mins, force offline
-                    if (p.online && p.last_seen && (now - p.last_seen > 600)) {
-                        p.online = false;
-                    }
-
-                    // Deduplication Logic: Favor latest last_seen
-                    if (!existing || (p.last_seen || 0) > (existing.last_seen || 0)) {
-                        deduped[name] = p;
-                    }
+            const res = await fetch(DASHBOARD_CONFIG.unified_api_url);
+            const data = await res.json();
+            if (data.server) serverHealth = data.server;
+            if (data.players) players = data.players;
+            if (data.history) playerHistory = data.history;
+            if (data.live_logs) {
+                liveLogs = data.live_logs;
+                const newLogs = liveLogs.filter(l => l.time > lastSeenLogTime).reverse();
+                newLogs.forEach(log => {
+                    showToast(log);
+                    lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
                 });
-                players = Object.values(deduped);
             }
-            
-            if (sRes.status === 'fulfilled') {
-                try {
-                    const sData = await sRes.value.json();
-                    if (sData) serverHealth = sData;
-                } catch(e) {}
-            }
-
-            if (hRes.status === 'fulfilled') {
-                try {
-                    const hData = await hRes.value.json();
-                    if (hData) playerHistory = Array.isArray(hData) ? hData : [];
-                } catch(e) {}
-            }
-
-            // Trigger Live Logs check
-            updateLiveLogs();
-        } catch (e) {
-            console.error('Quartz Dashboard Sync Error:', e);
+            renderAll();
+            updateGlobalCompetitionSummary();
+            return;
+        } catch (e) { console.error("API Sync Error:", e); }
         } finally {
             renderAll();
         }
     }
 
     let lastSeenLogTime = Math.floor(Date.now() / 1000);
-    async function updateLiveLogs() {
-        try {
-            const res = await fetch(baseFirebaseURL + 'server/live_logs.json');
-            const logs = await res.json();
-            if (!logs || !Array.isArray(logs)) return;
-
-            const feed = document.getElementById('live-activity-feed');
-            if (feed) {
-                feed.innerHTML = logs.slice(0, 5).map(log => `
-                    <div class="live-log-item">
-                        <div class="log-user">${log.user}</div>
-                        <div class="log-change ${log.change >= 0 ? 'pos' : 'neg'}">${log.change >= 0 ? '+' : ''}${log.change}</div>
-                    </div>
-                `).join('');
-            }
-
-            // Store globally for search and call render
-            liveLogs = logs;
-            renderEvents();
-
-            // Check for NEW logs to Toast (don't show old logs on load)
-            const newLogs = logs.filter(l => l.time > lastSeenLogTime).reverse();
-            newLogs.forEach(log => {
-                showToast(log);
-            });
-            // Real-time update for Global Summary Cards (Matches, Net Elo, Top Rank)
-            updateGlobalCompetitionSummary();
-
-            // --- Log Auto-Cleaner: Keep only last 100 logs to prevent Firebase overflow ---
-            if (logs.length > 100) {
-                const trimmedLogs = logs.slice(0, 100);
-                // Perform a non-blocking cleanup push
-                fetch(baseFirebaseURL + 'server/live_logs.json', {
-                    method: 'PUT',
-                    body: JSON.stringify(trimmedLogs)
-                }).catch(err => console.warn('Auto-cleaner failed:', err));
-            }
-        } catch(e) {}
-    }
 
     function updateGlobalCompetitionSummary() {
         if (!liveLogs || !Array.isArray(liveLogs)) return;

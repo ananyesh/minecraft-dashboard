@@ -1,18 +1,6 @@
 # WebStats Configuration
 # Dashboard Hosting (Firebase-free)
 web-port: 8080
-host-locally: true
-
-
-# Your Firebase Realtime Database URL. 
-# 1. Create a project at https://console.firebase.google.com/
-# 2. Add a Realtime Database.
-# 3. Paste the URL here (make sure it ends with /stats.json)
-# Example: "https://my-server-stats.firebaseio.com/stats.json"
-firebase-url: "https://minecraftstats-5f79c-default-rtdb.asia-southeast1.firebasedatabase.app/stats.json"
-
-# How often to sync to the cloud in seconds (default 10s).
-update-interval: 10
 
 # Ranked SMP Integration
 # If true, the plugin will look for RankedSMP data and display it on the website.
