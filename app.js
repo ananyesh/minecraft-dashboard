@@ -142,11 +142,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const newLogs = logs.filter(l => l.time > lastSeenLogTime).reverse();
             newLogs.forEach(log => {
                 showToast(log);
-                lastSeenLogTime = Math.max(lastSeenLogTime, log.time);
-            });
-            
             // Real-time update for Global Summary Cards (Matches, Net Elo, Top Rank)
             updateGlobalCompetitionSummary();
+
+            // --- Log Auto-Cleaner: Keep only last 100 logs to prevent Firebase overflow ---
+            if (logs.length > 100) {
+                const trimmedLogs = logs.slice(0, 100);
+                // Perform a non-blocking cleanup push
+                fetch(baseFirebaseURL + 'server/live_logs.json', {
+                    method: 'PUT',
+                    body: JSON.stringify(trimmedLogs)
+                }).catch(err => console.warn('Auto-cleaner failed:', err));
+            }
         } catch(e) {}
     }
 
