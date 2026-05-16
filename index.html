@@ -217,48 +217,55 @@
                         </div>
                     </div>
                     
-                    <div class="health-grid-premium">
-                        <div class="health-card-premium">
-                            <div class="h-card-header">
-                                <span class="h-label">ENGINE TPS</span>
-                                <i class="fa-solid fa-gauge-high h-icon-neon" style="color: var(--online)"></i>
-                            </div>
-                            <div class="h-value-row">
-                                <span class="h-value odometer" id="h-tps">20</span>
-                            </div>
-                            <div class="h-sub">Target: 20.0 TPS</div>
+                    <div class="summary-title">24-HOUR METRICS SUMMARY</div>
+                    <div class="metrics-summary-grid">
+                        <div class="metric-summary-card">
+                            <span class="m-label">PEAK TPS</span>
+                            <span class="m-value" id="peak-tps">20.00</span>
                         </div>
-                        <div class="health-card-premium">
-                            <div class="h-card-header">
-                                <span class="h-label">TICK DURATION</span>
-                                <i class="fa-solid fa-bolt h-icon-neon" style="color: var(--mspt-color)"></i>
-                            </div>
-                            <div class="h-value-row">
-                                <span class="h-value odometer" id="h-mspt">0</span>
-                                <span class="h-unit">ms</span>
-                            </div>
-                            <div class="h-sub">Lower is better</div>
+                        <div class="metric-summary-card">
+                            <span class="m-label">LOW TPS</span>
+                            <span class="m-value" id="low-tps">20.00</span>
                         </div>
-                        <div class="health-card-premium">
-                            <div class="h-card-header">
-                                <span class="h-label">AVG TPS (24H)</span>
-                                <i class="fa-solid fa-clock-rotate-left h-icon-neon" style="color: var(--secondary)"></i>
-                            </div>
-                            <div class="h-value-row">
-                                <span class="h-value odometer" id="h-avg-tps">20</span>
-                            </div>
-                            <div class="h-sub">Daily stability</div>
+                        <div class="metric-summary-card">
+                            <span class="m-label">PEAK MSPT</span>
+                            <span class="m-value" id="peak-mspt">0.0</span>
                         </div>
-                        <div class="health-card-premium">
-                            <div class="h-card-header">
-                                <span class="h-label">AVG MSPT (24H)</span>
-                                <i class="fa-solid fa-chart-line h-icon-neon" style="color: var(--secondary)"></i>
+                        <div class="metric-summary-card">
+                            <span class="m-label">LOW MSPT</span>
+                            <span class="m-value" id="low-mspt">0.0</span>
+                        </div>
+                        <div class="metric-summary-card">
+                            <span class="m-label">PEAK PLAYERS</span>
+                            <span class="m-value" id="peak-players">0</span>
+                        </div>
+                        <div class="metric-summary-card">
+                            <span class="m-label">PEAK NETWORK</span>
+                            <span class="m-value"><span id="peak-net">0.0</span> <small>Mbps</small></span>
+                        </div>
+                    </div>
+
+                    <div class="system-status-console">
+                        <div class="status-header-row">
+                            <i class="fa-solid fa-circle-info"></i> SYSTEM STATUS
+                        </div>
+                        <div class="status-content">
+                            <div class="status-row">
+                                <span class="status-label">Server Performance</span>
+                                <span class="status-value status-excellent" id="status-perf">Excellent</span>
                             </div>
-                            <div class="h-value-row">
-                                <span class="h-value odometer" id="h-avg-mspt">0</span>
-                                <span class="h-unit">ms</span>
+                            <div class="status-row">
+                                <span class="status-label">TPS Stability</span>
+                                <span class="status-value status-stable" id="status-tps">Stable</span>
                             </div>
-                            <div class="h-sub">Daily average</div>
+                            <div class="status-row">
+                                <span class="status-label">Network Status</span>
+                                <span class="status-value status-stable" id="status-net">Stable</span>
+                            </div>
+                            <div class="status-row">
+                                <span class="status-label">Player Capacity</span>
+                                <span class="status-value status-excellent" id="status-capacity">Moderate</span>
+                            </div>
                         </div>
                     </div>
 

@@ -517,7 +517,132 @@ select#sort-by option {
 .odometer.odometer-theme-minimal .odometer-value { color: inherit !important; }
 .odometer * { color: inherit !important; }
 
-/* Chart Container Enhancements */
+/* Chart Container Upgrades */
+.summary-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin: 24px 0 12px 4px;
+    text-transform: uppercase;
+}
+
+.metrics-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.metric-summary-card {
+    background: rgba(10, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.metric-summary-card:hover {
+    border-color: rgba(0, 243, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.metric-summary-card .m-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.metric-summary-card .m-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #00f3ff;
+    letter-spacing: -0.02em;
+}
+
+.metric-summary-card .m-value small {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-left: 4px;
+}
+
+/* System Status Console */
+.system-status-console {
+    background: rgba(10, 15, 25, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 32px;
+    overflow: hidden;
+}
+
+.status-header-row {
+    background: rgba(0, 243, 255, 0.03);
+    padding: 12px 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #00f3ff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.1em;
+}
+
+.status-content {
+    padding: 12px 20px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.status-row:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.status-label {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.status-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.status-excellent { color: #00f3ff; }
+.status-stable { color: #10b981; }
+.status-elevated { color: #fbbf24; }
+.status-moderate { color: #fbbf24; }
+.status-critical { color: #ef4444; }
+
+@media (max-width: 900px) {
+    .metrics-summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .metrics-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .chart-container-premium {
     background: var(--card-bg); 
     border: 1px solid var(--card-border);

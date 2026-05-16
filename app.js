@@ -417,67 +417,74 @@ document.addEventListener('DOMContentLoaded', () => {
         const netOut = serverHealth.net_out || 0;
         const netTotal = netIn + netOut;
 
-        const tpsEl = document.getElementById('h-tps');
-        const msptEl = document.getElementById('h-mspt');
-
-        // Calculate 24h Averages
+        // Calculate 24h Summary Data
         const history = playerHistory || [];
-        const recentHistory = history.slice(-288); // Approx 24h if 5m intervals
-        const avgTpsVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.tps || 20), 0) / recentHistory.length : tps;
-        const avgMsptVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.mspt || 0), 0) / recentHistory.length : mspt;
+        const recentHistory = history.slice(-288); // Approx 24h
 
-        // Initialize Odometers on first render
-        if (typeof Odometer !== 'undefined') {
-            if (!tpsOdo && hTPS) tpsOdo = new Odometer({ el: hTPS, value: tps, format: 'd', theme: 'minimal', duration: 800 });
-            if (!msptOdo && hMSPT) msptOdo = new Odometer({ el: hMSPT, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
-            if (!avgTpsOdo && hAvgTPS) avgTpsOdo = new Odometer({ el: hAvgTPS, value: avgTpsVal, format: 'd', theme: 'minimal', duration: 800 });
-            if (!avgMsptOdo && hAvgMSPT) avgMsptOdo = new Odometer({ el: hAvgMSPT, value: avgMsptVal, format: 'd', theme: 'minimal', duration: 800 });
+        const peakTpsVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => h.t || 0)) : tps;
+        const lowTpsVal = recentHistory.length > 0 ? Math.min(...recentHistory.map(h => h.t || 20)) : tps;
+        const peakMsptVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => h.m || 0)) : mspt;
+        const lowMsptVal = recentHistory.length > 0 ? Math.min(...recentHistory.map(h => h.m || 0)) : mspt;
+        const peakPlayersVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => h.p || 0)) : players.filter(p => p.online).length;
+        const peakNetVal = recentHistory.length > 0 ? Math.max(...recentHistory.map(h => (h.ni || 0) + (h.no || 0))) : netTotal;
 
-            // Update values (animate)
-            if (tpsOdo) tpsOdo.update(Math.round(tps));
-            if (msptOdo) msptOdo.update(Math.round(mspt));
-            if (avgTpsOdo) avgTpsOdo.update(Math.round(avgTpsVal));
-            if (avgMsptOdo) avgMsptOdo.update(Math.round(avgMsptVal));
-        } else {
-            if (hTPS) hTPS.textContent = tps.toFixed(1);
-            if (hMSPT) hMSPT.textContent = Math.round(mspt);
-            if (hAvgTPS) hAvgTPS.textContent = avgTpsVal.toFixed(1);
-            if (hAvgMSPT) hAvgMSPT.textContent = Math.round(avgMsptVal);
+        // Update Summary Grid
+        const elPeakTps = document.getElementById('peak-tps');
+        const elLowTps = document.getElementById('low-tps');
+        const elPeakMspt = document.getElementById('peak-mspt');
+        const elLowMspt = document.getElementById('low-mspt');
+        const elPeakPlayers = document.getElementById('peak-players');
+        const elPeakNet = document.getElementById('peak-net');
+
+        if (elPeakTps) elPeakTps.textContent = peakTpsVal.toFixed(2);
+        if (elLowTps) elLowTps.textContent = lowTpsVal.toFixed(2);
+        if (elPeakMspt) elPeakMspt.textContent = peakMsptVal.toFixed(1);
+        if (elLowMspt) elLowMspt.textContent = lowMsptVal.toFixed(1);
+        if (elPeakPlayers) elPeakPlayers.textContent = peakPlayersVal;
+        if (elPeakNet) elPeakNet.textContent = peakNetVal.toFixed(1);
+
+        // Update System Status Labels
+        const elPerf = document.getElementById('status-perf');
+        const elStatusTps = document.getElementById('status-tps');
+        const elStatusNet = document.getElementById('status-net');
+        const elStatusCap = document.getElementById('status-capacity');
+
+        if (elPerf) {
+            if (tps > 19.5 && mspt < 25) { elPerf.textContent = 'Excellent'; elPerf.className = 'status-value status-excellent'; }
+            else if (tps > 18.0) { elPerf.textContent = 'Good'; elPerf.className = 'status-value status-stable'; }
+            else { elPerf.textContent = 'Degraded'; elPerf.className = 'status-value status-critical'; }
         }
 
-        // Color coding - TPS
-        if (tpsEl) tpsEl.style.color = tps > 18 ? 'var(--online)' : (tps > 15 ? 'var(--accent)' : 'var(--offline)');
-        // Color coding - MSPT (5-tier traffic light)
-        if (msptEl) {
-            if (mspt >= 50.0)        msptEl.style.setProperty('color', '#ef4444', 'important'); // Red
-            else if (mspt >= 37.5) msptEl.style.setProperty('color', '#f97316', 'important'); // Orange 
-            else if (mspt >= 25.0)   msptEl.style.setProperty('color', '#eab308', 'important'); // Yellow
-            else if (mspt >= 12.5) msptEl.style.setProperty('color', '#fef08a', 'important'); // Light yellow
-            else                     msptEl.style.setProperty('color', '#4ade80', 'important'); // Light green
+        if (elStatusTps) {
+            const tpsVar = peakTpsVal - lowTpsVal;
+            if (tpsVar < 0.2) { elStatusTps.textContent = 'Stable'; elStatusTps.className = 'status-value status-stable'; }
+            else if (tpsVar < 1.0) { elStatusTps.textContent = 'Fluctuating'; elStatusTps.className = 'status-value status-moderate'; }
+            else { elStatusTps.textContent = 'Unstable'; elStatusTps.className = 'status-value status-critical'; }
         }
 
-        // Players Online card
-        const playersEl = document.getElementById('h-players');
-        const onlineCount = serverHealth.status === 'offline' ? 0 : players.filter(p => p.online).length;
-        if (typeof Odometer !== 'undefined' && playersEl) {
-            if (!playersOdo) {
-                playersOdo = new Odometer({ el: playersEl, value: 0, format: 'd', theme: 'minimal', duration: 800 });
-            }
-            playersOdo.update(onlineCount);
-        } else if (playersEl) {
-            playersEl.textContent = onlineCount;
+        if (elStatusNet) {
+            if (netTotal < 10) { elStatusNet.textContent = 'Stable'; elStatusNet.className = 'status-value status-stable'; }
+            else if (netTotal < 50) { elStatusNet.textContent = 'Elevated'; elStatusNet.className = 'status-value status-elevated'; }
+            else { elStatusNet.textContent = 'Critical'; elStatusNet.className = 'status-value status-critical'; }
+        }
+
+        if (elStatusCap) {
+            const cap = players.filter(p => p.online).length / Math.max(1, serverHealth.players_max);
+            if (cap < 0.5) { elStatusCap.textContent = 'Low Load'; elStatusCap.className = 'status-value status-excellent'; }
+            else if (cap < 0.9) { elStatusCap.textContent = 'Moderate'; elStatusCap.className = 'status-value status-moderate'; }
+            else { elStatusCap.textContent = 'Full'; elStatusCap.className = 'status-value status-critical'; }
         }
     }
 
     function renderQuadGraphs() {
         if (!playerHistory || playerHistory.length < 2) return;
-        renderSingleChart('graph-players', 'p', Math.max(...playerHistory.map(d => d.p || 0), 5), 'var(--player-color)', 'line-players');
-        renderSingleChart('graph-tps', 't', 20, 'var(--tps-color)', 'line-tps');
-        renderSingleChart('graph-mspt', 'm', Math.max(...playerHistory.map(d => d.m || 0), 60), 'var(--mspt-color)', 'line-mspt');
-        renderSingleChart('graph-net', 'ni', Math.max(...playerHistory.map(d => (d.ni || 0) + (d.no || 0)), 10), '#3b82f6', 'line-net');
+        renderSingleChart('graph-players', 'p', 'var(--player-color)', 'line-players');
+        renderSingleChart('graph-tps', 't', 'var(--tps-color)', 'line-tps');
+        renderSingleChart('graph-mspt', 'm', 'var(--mspt-color)', 'line-mspt');
+        renderSingleChart('graph-net', 'ni', '#3b82f6', 'line-net');
     }
 
-    function renderSingleChart(svgId, key, maxVal, color, lineClass) {
+    function renderSingleChart(svgId, key, color, lineClass) {
         const svg = document.getElementById(svgId);
         if (!svg) return;
         
@@ -493,24 +500,46 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Dynamic Scaling
+        const values = playerHistory.map(d => {
+            if (key === 'ni') return (d.ni || 0) + (d.no || 0);
+            return d[key] || 0;
+        });
+        
+        let minVal = Math.min(...values);
+        let maxVal = Math.max(...values);
+        
+        // Add padding to scaling
+        if (key === 't') { // TPS: focus on 15-20 usually
+            maxVal = 20.1;
+            minVal = Math.min(minVal, 19.0) - 0.2;
+        } else {
+            const padding = (maxVal - minVal) * 0.1 || 1;
+            maxVal += padding;
+            minVal = Math.max(0, minVal - padding);
+        }
+
         const stepX = chartW / (count - 1);
-        const getY = (val) => marginT + chartH - ((Math.min(val, maxVal) / maxVal) * chartH);
+        const getY = (val) => marginT + chartH - (((val - minVal) / Math.max(0.1, maxVal - minVal)) * chartH);
         
         let innerHTML = '';
 
         // Draw Horizontal Grid Lines & Y Axis Labels
         const gridCount = 4;
         for (let i = 0; i <= gridCount; i++) {
-            const val = (maxVal / gridCount) * i;
+            const val = minVal + (maxVal - minVal) / gridCount * i;
             const y = getY(val);
             innerHTML += `
                 <line x1="${marginL}" y1="${y}" x2="${w - marginR}" y2="${y}" class="grid-line"></line>
-                <text x="${marginL - 8}" y="${y + 3}" class="axis-text axis-y">${Math.round(val)}</text>
+                <text x="${marginL - 8}" y="${y + 3}" class="axis-text axis-y">${val < 10 ? val.toFixed(1) : Math.round(val)}</text>
             `;
         }
 
         // Draw Data Path
-        const points = playerHistory.map((d, i) => `${marginL + i * stepX},${getY(d[key])}`);
+        const points = playerHistory.map((d, i) => {
+            const val = key === 'ni' ? (d.ni || 0) + (d.no || 0) : d[key];
+            return `${marginL + i * stepX},${getY(val)}`;
+        });
         innerHTML += `<path d="M ${points.join(' L ')}" class="graph-line ${lineClass}"></path>`;
 
         // Draw X Axis Time Labels (Sample points)
