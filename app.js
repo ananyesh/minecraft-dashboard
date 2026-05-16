@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let rankedOnly = false;
     let tpsOdo = null;
     let msptOdo = null;
+    let avgTpsOdo = null;
+    let avgMsptOdo = null;
     let playersOdo = null;
     let netOdo = null;
     const statCache = {}; // { uuid_statKey: lastValue } for odometer prev->new animation
@@ -37,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Health UI
     const hTPS = document.getElementById('h-tps');
     const hMSPT = document.getElementById('h-mspt');
+    const hAvgTPS = document.getElementById('h-avg-tps');
+    const hAvgMSPT = document.getElementById('h-avg-mspt');
 
     const navPlayers = document.getElementById('nav-players');
     const navLeaderboards = document.getElementById('nav-leaderboards');
@@ -381,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentTab === 'events') renderEvents();
         
         renderHealthStatus();
-        renderQuadGraphs();
+        if (currentTab === 'health') renderQuadGraphs();
 
         if (selectedPlayer) {
             const updated = players.find(p => p.uuid === selectedPlayer.uuid);
@@ -401,28 +405,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tpsEl = document.getElementById('h-tps');
         const msptEl = document.getElementById('h-mspt');
-        const netEl = document.getElementById('h-net');
+
+        // Calculate 24h Averages
+        const history = playerHistory || [];
+        const recentHistory = history.slice(-288); // Approx 24h if 5m intervals
+        const avgTpsVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.tps || 20), 0) / recentHistory.length : tps;
+        const avgMsptVal = recentHistory.length > 0 ? recentHistory.reduce((sum, h) => sum + (h.mspt || 0), 0) / recentHistory.length : mspt;
 
         // Initialize Odometers on first render
         if (typeof Odometer !== 'undefined') {
-            if (!tpsOdo && tpsEl) {
-                tpsOdo = new Odometer({ el: tpsEl, value: tps, format: 'd', theme: 'minimal', duration: 800 });
-            }
-            if (!msptOdo && msptEl) {
-                msptOdo = new Odometer({ el: msptEl, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
-            }
-            if (!netOdo && netEl) {
-                netOdo = new Odometer({ el: netEl, value: netTotal, format: 'd', theme: 'minimal', duration: 800 });
-            }
+            if (!tpsOdo && hTPS) tpsOdo = new Odometer({ el: hTPS, value: tps, format: 'd', theme: 'minimal', duration: 800 });
+            if (!msptOdo && hMSPT) msptOdo = new Odometer({ el: hMSPT, value: mspt, format: 'd', theme: 'minimal', duration: 800 });
+            if (!avgTpsOdo && hAvgTPS) avgTpsOdo = new Odometer({ el: hAvgTPS, value: avgTpsVal, format: 'd', theme: 'minimal', duration: 800 });
+            if (!avgMsptOdo && hAvgMSPT) avgMsptOdo = new Odometer({ el: hAvgMSPT, value: avgMsptVal, format: 'd', theme: 'minimal', duration: 800 });
+
             // Update values (animate)
             if (tpsOdo) tpsOdo.update(Math.round(tps));
             if (msptOdo) msptOdo.update(Math.round(mspt));
-            if (netOdo) netOdo.update(Math.round(netTotal));
+            if (avgTpsOdo) avgTpsOdo.update(Math.round(avgTpsVal));
+            if (avgMsptOdo) avgMsptOdo.update(Math.round(avgMsptVal));
         } else {
-            // Fallback if odometer.js didn't load
-            if (tpsEl) tpsEl.textContent = tps.toFixed(1);
-            if (msptEl) msptEl.textContent = Math.round(mspt);
-            if (netEl) netEl.textContent = netTotal.toFixed(1);
+            if (hTPS) hTPS.textContent = tps.toFixed(1);
+            if (hMSPT) hMSPT.textContent = Math.round(mspt);
+            if (hAvgTPS) hAvgTPS.textContent = avgTpsVal.toFixed(1);
+            if (hAvgMSPT) hAvgMSPT.textContent = Math.round(avgMsptVal);
         }
 
         // Color coding - TPS
@@ -434,14 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (mspt >= 25.0)   msptEl.style.setProperty('color', '#eab308', 'important'); // Yellow
             else if (mspt >= 12.5) msptEl.style.setProperty('color', '#fef08a', 'important'); // Light yellow
             else                     msptEl.style.setProperty('color', '#4ade80', 'important'); // Light green
-        }
-        // Color coding - Network (DDoS Alert System)
-        if (netEl) {
-            if (netTotal >= 200)      netEl.style.setProperty('color', '#ef4444', 'important'); // Critical - Red
-            else if (netTotal >= 100) netEl.style.setProperty('color', '#f97316', 'important'); // Danger - Orange
-            else if (netTotal >= 50)  netEl.style.setProperty('color', '#eab308', 'important'); // Warning - Yellow
-            else if (netTotal >= 10)  netEl.style.setProperty('color', '#06b6d4', 'important'); // Elevated - Cyan
-            else                      netEl.style.setProperty('color', '#3b82f6', 'important'); // Normal - Blue
         }
 
         // Players Online card
