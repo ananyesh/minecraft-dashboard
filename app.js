@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const hAvgTPS = document.getElementById('h-avg-tps');
     const hAvgMSPT = document.getElementById('h-avg-mspt');
 
+    const navPlayers = document.getElementById('nav-players');
+    const navLeaderboards = document.getElementById('nav-leaderboards');
+    const navHealth = document.getElementById('nav-health');
     const navFaq = document.getElementById('nav-faq');
     const navEvents = document.getElementById('nav-events');
     const btnFilterRanked = document.getElementById('btn-filter-ranked');
